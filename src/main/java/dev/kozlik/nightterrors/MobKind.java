@@ -30,6 +30,8 @@ final class MobKind {
     boolean silent;
     boolean clearEquipment;
     double knockback;
+    String model;
+    float modelYawOffset;
 
     String soundKey;
     double soundRadius;
@@ -98,6 +100,8 @@ final class MobKind {
         k.silent = s.getBoolean("silent", true);
         k.clearEquipment = s.getBoolean("clear-equipment", false);
         k.knockback = s.getDouble("knockback", 0);
+        k.model = s.getString("model", "");
+        k.modelYawOffset = (float) s.getDouble("model-yaw-offset", 0);
 
         k.soundKey = s.getString("sound.key", "");
         k.soundRadius = s.getDouble("sound.radius", 16);

@@ -1,0 +1,352 @@
+{
+ "stalker": {
+  "scale": 2.0,
+  "stride": 2.1,
+  "bob": 0.0,
+  "parts": [
+   {
+    "model": "stalker_torso",
+    "pivot": [
+     0.0,
+     1.5,
+     0.0
+    ],
+    "axis": "z",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.015,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "stalker_head",
+    "pivot": [
+     0.0,
+     2.8,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": false
+   },
+   {
+    "model": "stalker_eyes",
+    "pivot": [
+     0.0,
+     2.8,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": true
+   },
+   {
+    "model": "stalker_leg_l",
+    "pivot": [
+     -0.1875,
+     1.5,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.65,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "stalker_leg_r",
+    "pivot": [
+     0.1875,
+     1.5,
+     0.0
+    ],
+    "axis": "x",
+    "swing": -0.65,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "stalker_arm_l",
+    "pivot": [
+     -0.475,
+     2.5875,
+     0.0
+    ],
+    "axis": "x",
+    "swing": -0.45,
+    "offset": 0.0,
+    "idle": 0.03,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "stalker_arm_r",
+    "pivot": [
+     0.475,
+     2.5875,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.45,
+    "offset": 1.5,
+    "idle": 0.03,
+    "look": false,
+    "glow": false
+   }
+  ]
+ },
+ "watcher": {
+  "scale": 2.0,
+  "stride": 2.0,
+  "bob": 0.0,
+  "parts": [
+   {
+    "model": "watcher_body",
+    "pivot": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "axis": "z",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.012,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "watcher_head",
+    "pivot": [
+     0.0,
+     2.5625,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": false
+   },
+   {
+    "model": "watcher_eyes",
+    "pivot": [
+     0.0,
+     2.5625,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": true
+   }
+  ]
+ },
+ "ripper": {
+  "scale": 1.6,
+  "stride": 3.6,
+  "bob": 0.05,
+  "parts": [
+   {
+    "model": "ripper_body",
+    "pivot": [
+     0.0,
+     0.9,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "ripper_head",
+    "pivot": [
+     0.0,
+     1.05,
+     0.8
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": false
+   },
+   {
+    "model": "ripper_glow",
+    "pivot": [
+     0.0,
+     1.05,
+     0.8
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": true
+   },
+   {
+    "model": "ripper_leg_fl",
+    "pivot": [
+     -0.25,
+     0.75,
+     0.6
+    ],
+    "axis": "x",
+    "swing": 0.7,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "ripper_leg_fr",
+    "pivot": [
+     0.25,
+     0.75,
+     0.6
+    ],
+    "axis": "x",
+    "swing": -0.7,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "ripper_leg_bl",
+    "pivot": [
+     -0.22,
+     0.8,
+     -0.64
+    ],
+    "axis": "x",
+    "swing": -0.7,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "ripper_leg_br",
+    "pivot": [
+     0.22,
+     0.8,
+     -0.64
+    ],
+    "axis": "x",
+    "swing": 0.7,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "ripper_tail",
+    "pivot": [
+     0.0,
+     1.03,
+     -0.8
+    ],
+    "axis": "y",
+    "swing": 0.2,
+    "offset": 0.0,
+    "idle": 0.25,
+    "look": false,
+    "glow": false
+   }
+  ]
+ },
+ "crawler": {
+  "scale": 1.5,
+  "stride": 5.0,
+  "bob": 0.04,
+  "parts": [
+   {
+    "model": "crawler_body",
+    "pivot": [
+     0.0,
+     0.2344,
+     0.0
+    ],
+    "axis": "y",
+    "swing": 0.12,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "crawler_head",
+    "pivot": [
+     0.0,
+     0.3,
+     0.4688
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": false
+   },
+   {
+    "model": "crawler_eyes",
+    "pivot": [
+     0.0,
+     0.3,
+     0.4688
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": true,
+    "glow": true
+   },
+   {
+    "model": "crawler_arm_l",
+    "pivot": [
+     -0.225,
+     0.2625,
+     0.375
+    ],
+    "axis": "y",
+    "swing": 0.6,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "crawler_arm_r",
+    "pivot": [
+     0.225,
+     0.2625,
+     0.375
+    ],
+    "axis": "y",
+    "swing": 0.6,
+    "offset": 0.0,
+    "idle": 0.0,
+    "look": false,
+    "glow": false
+   }
+  ]
+ }
+}

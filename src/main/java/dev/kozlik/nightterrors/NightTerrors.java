@@ -40,6 +40,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.EntityEquipment;
@@ -57,6 +58,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     /** Runtime state of one living custom mob. */
     private static final class Tracked {
         final Mob mob;
+        Rig rig;
         MobKind kind;
         double growth;
         long lastSound;
@@ -77,6 +79,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     private final Map<UUID, Double> stare = new HashMap<>();
     private final Set<UUID> staringNow = new HashSet<>();
     private NamespacedKey kindKey;
+    private Map<String, Rig.Def> rigs = new HashMap<>();
     private boolean despawnAtDay;
     private String packUrl = "";
     private byte[] packHash;
@@ -87,6 +90,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     public void onEnable() {
         kindKey = new NamespacedKey(this, "kind");
         saveDefaultConfig();
+        rigs = Rig.load(this);
         loadKinds();
         Bukkit.getPluginManager().registerEvents(this, this);
         for (World w : Bukkit.getWorlds()) {
@@ -215,6 +219,19 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         setAttr(mob, Attribute.FOLLOW_RANGE, k.followRange);
         setAttr(mob, Attribute.SCALE, k.scale);
         mob.setSilent(k.silent);
+        Rig.Def rigDef = k.model == null ? null : rigs.get(k.model);
+        if (rigDef != null) {
+            // The vanilla body only does the walking and fighting; what players see is the rig.
+            mob.setInvisible(true);
+            EntityEquipment eq = mob.getEquipment();
+            if (eq != null) {
+                eq.clear();
+            }
+            if (t.rig != null) {
+                t.rig.remove();
+            }
+            t.rig = new Rig(rigDef, mob, k.modelYawOffset);
+        }
         if (k.behavior == MobKind.Behavior.STALKER || k.behavior == MobKind.Behavior.WATCHER) {
             // These two are driven only by this plugin, not by the vanilla brain.
             Bukkit.getMobGoals().removeAllGoals(mob);
@@ -231,6 +248,40 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         if (inst != null) {
             inst.setBaseValue(value);
         }
+    }
+
+    private void untrack(UUID id) {
+        Tracked t = tracked.remove(id);
+        if (t != null && t.rig != null) {
+            t.rig.remove();
+            t.rig = null;
+        }
+    }
+
+    @Override
+    public void onDisable() {
+        for (UUID id : new ArrayList<>(tracked.keySet())) {
+            untrack(id);
+        }
+    }
+
+    @EventHandler
+    public void onDeath(EntityDeathEvent e) {
+        Tracked t = tracked.get(e.getEntity().getUniqueId());
+        if (t != null && t.rig != null) {
+            // The invisible body would play its death animation for a second; hide the model in smoke instead.
+            Location at = t.mob.getLocation().add(0, t.mob.getHeight() / 2.0, 0);
+            t.mob.getWorld().spawnParticle(Particle.LARGE_SMOKE, at, 30, 0.4, t.mob.getHeight() / 3.0, 0.4, 0.02);
+            untrack(t.mob.getUniqueId());
+        }
+    }
+
+    private Location lookPoint(Mob mob) {
+        LivingEntity target = mob.getTarget();
+        if (target == null || !target.isValid() || !target.getWorld().equals(mob.getWorld())) {
+            target = nearestPlayer(mob, 40);
+        }
+        return target == null ? null : target.getEyeLocation();
     }
 
     private void adopt(Entity entity) {
@@ -263,7 +314,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onRemove(EntityRemoveFromWorldEvent e) {
-        tracked.remove(e.getEntity().getUniqueId());
+        untrack(e.getEntity().getUniqueId());
     }
 
     // ------------------------------------------------------------------ behaviour loop
@@ -274,7 +325,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         for (Tracked t : snapshot) {
             Mob mob = t.mob;
             if (!mob.isValid() || mob.isDead()) {
-                tracked.remove(mob.getUniqueId());
+                untrack(mob.getUniqueId());
                 continue;
             }
             if (despawnAtDay && t.kind.onlyAtNight && mob.getWorld().isDayTime()) {
@@ -290,11 +341,14 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             }
             if (mob.isValid()) {
                 sound(t);
+                if (t.rig != null) {
+                    t.rig.update(mob, lookPoint(mob));
+                }
             }
         }
-        for (Iterator<Tracked> it = tracked.values().iterator(); it.hasNext();) {
-            if (!it.next().mob.isValid()) {
-                it.remove();
+        for (Tracked t : new ArrayList<>(tracked.values())) {
+            if (!t.mob.isValid()) {
+                untrack(t.mob.getUniqueId());
             }
         }
         // Players who looked away calm down again.
@@ -626,7 +680,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         World w = mob.getWorld();
         w.spawnParticle(Particle.LARGE_SMOKE, at, 40, 0.4, mob.getHeight() / 3.0, 0.4, 0.02);
         w.playSound(at, "minecraft:entity.enderman.teleport", 0.7f, 0.5f);
-        tracked.remove(mob.getUniqueId());
+        untrack(mob.getUniqueId());
         mob.remove();
     }
 
@@ -650,10 +704,10 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             case "killall" -> {
                 int n = 0;
                 for (Tracked t : new ArrayList<>(tracked.values())) {
+                    untrack(t.mob.getUniqueId());
                     t.mob.remove();
                     n++;
                 }
-                tracked.clear();
                 sender.sendMessage("NightTerrors: removed " + n + " mobs.");
             }
             case "kill" -> {
@@ -661,7 +715,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 int n = 0;
                 for (Tracked t : new ArrayList<>(tracked.values())) {
                     if (t.kind.id.equals(id)) {
-                        tracked.remove(t.mob.getUniqueId());
+                        untrack(t.mob.getUniqueId());
                         t.mob.remove();
                         n++;
                     }
