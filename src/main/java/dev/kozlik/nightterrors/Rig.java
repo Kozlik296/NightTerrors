@@ -171,6 +171,16 @@ final class Rig {
         }
     }
 
+    /** Red outline on or off; used as the "I got hit" flash, since a model cannot turn red like a vanilla mob. */
+    void flash(boolean on) {
+        for (ItemDisplay d : displays) {
+            if (d.isValid()) {
+                d.setGlowColorOverride(org.bukkit.Color.RED);
+                d.setGlowing(on);
+            }
+        }
+    }
+
     void remove() {
         for (ItemDisplay d : displays) {
             d.remove();

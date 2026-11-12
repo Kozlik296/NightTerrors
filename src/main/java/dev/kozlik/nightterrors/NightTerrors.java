@@ -384,6 +384,16 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             e.setCancelled(true);
             return;
         }
+        Tracked hit = tracked.get(e.getEntity().getUniqueId());
+        if (hit != null && hit.rig != null && e.getFinalDamage() > 0) {
+            // The real body is invisible and silent, so show and play the hit ourselves.
+            Location at = hit.mob.getLocation().add(0, hit.mob.getHeight() * 0.6, 0);
+            hit.mob.getWorld().playSound(at, "minecraft:entity.zombie.hurt", SoundCategory.HOSTILE, 1.0f, 0.5f);
+            hit.mob.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, at, 6, 0.3, 0.3, 0.3, 0.1);
+            Rig rig = hit.rig;
+            rig.flash(true);
+            Bukkit.getScheduler().runTaskLater(this, () -> rig.flash(false), 6L);
+        }
         if (e instanceof EntityDamageByEntityEvent by && e.getEntity() instanceof Player victim) {
             Tracked t = tracked.get(by.getDamager().getUniqueId());
             if (t != null && t.kind.knockback > 0) {
