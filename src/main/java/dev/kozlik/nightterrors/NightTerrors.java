@@ -1,0 +1,550 @@
+package dev.kozlik.nightterrors;
+
+import com.destroystokyo.paper.entity.Pathfinder;
+import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.HeightMap;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
+import org.bukkit.SoundCategory;
+import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Ageable;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Zoglin;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
+
+public final class NightTerrors extends JavaPlugin implements Listener {
+
+    /** How often the behaviour loop runs, in ticks. */
+    private static final int STEP = 2;
+
+    /** Runtime state of one living custom mob. */
+    private static final class Tracked {
+        final Mob mob;
+        MobKind kind;
+        double growth;
+        long lastSound;
+        long lastAttack;
+        long lastLeap;
+        long fleeUntil;
+        int seenTicks;
+
+        Tracked(Mob mob, MobKind kind) {
+            this.mob = mob;
+            this.kind = kind;
+        }
+    }
+
+    private final Map<String, MobKind> kinds = new LinkedHashMap<>();
+    private final Map<UUID, Tracked> tracked = new LinkedHashMap<>();
+    private NamespacedKey kindKey;
+    private boolean despawnAtDay;
+    private double viewCos;
+    private long tick;
+
+    @Override
+    public void onEnable() {
+        kindKey = new NamespacedKey(this, "kind");
+        saveDefaultConfig();
+        loadKinds();
+        Bukkit.getPluginManager().registerEvents(this, this);
+        for (World w : Bukkit.getWorlds()) {
+            for (Mob mob : w.getEntitiesByClass(Mob.class)) {
+                adopt(mob);
+            }
+        }
+        Bukkit.getScheduler().runTaskTimer(this, this::step, 20L, STEP);
+        getLogger().info("Loaded " + kinds.size() + " mob types.");
+    }
+
+    private void loadKinds() {
+        reloadConfig();
+        kinds.clear();
+        despawnAtDay = getConfig().getBoolean("settings.despawn-at-day", true);
+        viewCos = Math.cos(Math.toRadians(getConfig().getDouble("settings.view-angle", 65)));
+        ConfigurationSection mobs = getConfig().getConfigurationSection("mobs");
+        if (mobs != null) {
+            for (String id : mobs.getKeys(false)) {
+                ConfigurationSection s = mobs.getConfigurationSection(id);
+                if (s != null) {
+                    kinds.put(id.toLowerCase(Locale.ROOT), MobKind.load(id.toLowerCase(Locale.ROOT), s, getLogger()));
+                }
+            }
+        }
+        // Mobs already alive follow the new settings; mobs whose type was deleted stay as they are.
+        for (Tracked t : tracked.values()) {
+            MobKind k = kinds.get(t.kind.id);
+            if (k != null) {
+                t.kind = k;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ spawning
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onNaturalSpawn(CreatureSpawnEvent e) {
+        if (e.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) {
+            return;
+        }
+        Location loc = e.getLocation();
+        World w = loc.getWorld();
+        if (w == null) {
+            return;
+        }
+        for (MobKind k : kinds.values()) {
+            if (!k.enabled || !k.replaces.contains(e.getEntityType())) {
+                continue;
+            }
+            if (!k.worlds.isEmpty() && !k.worlds.contains(w.getName())) {
+                continue;
+            }
+            if (k.onlyAtNight && w.isDayTime()) {
+                continue;
+            }
+            if (k.surfaceOnly && w.getHighestBlockYAt(loc, HeightMap.MOTION_BLOCKING_NO_LEAVES) > loc.getBlockY()) {
+                continue;
+            }
+            if (ThreadLocalRandom.current().nextDouble() * 100.0 >= k.chancePercent) {
+                continue;
+            }
+            if (countAlive(k, w) >= k.maxAlive) {
+                continue;
+            }
+            e.setCancelled(true);
+            Location at = loc.clone();
+            Bukkit.getScheduler().runTask(this, () -> spawn(k, at));
+            return;
+        }
+    }
+
+    private int countAlive(MobKind k, World w) {
+        int n = 0;
+        for (Tracked t : tracked.values()) {
+            if (t.kind.id.equals(k.id) && t.mob.isValid() && t.mob.getWorld().equals(w)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    private Mob spawn(MobKind k, Location loc) {
+        World w = loc.getWorld();
+        if (w == null) {
+            return null;
+        }
+        Entity ent = w.spawnEntity(loc, k.entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+        if (!(ent instanceof Mob mob)) {
+            ent.remove();
+            getLogger().warning("Mob '" + k.id + "': entity " + k.entity + " is not a mob.");
+            return null;
+        }
+        for (Entity rider : mob.getPassengers()) {
+            rider.remove();
+        }
+        mob.getPersistentDataContainer().set(kindKey, PersistentDataType.STRING, k.id);
+        if (mob instanceof Ageable a) {
+            a.setAdult();
+        }
+        if (mob instanceof Zoglin z) {
+            z.setBaby(false);
+        }
+        if (k.clearEquipment) {
+            EntityEquipment eq = mob.getEquipment();
+            if (eq != null) {
+                eq.clear();
+            }
+        }
+        setAttr(mob, Attribute.MAX_HEALTH, k.health);
+        mob.setHealth(k.health);
+        Tracked t = new Tracked(mob, k);
+        tracked.put(mob.getUniqueId(), t);
+        prepare(t);
+        return mob;
+    }
+
+    /** Applies everything that has to be redone when a mob is loaded again from disk. */
+    private void prepare(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        setAttr(mob, Attribute.MOVEMENT_SPEED, k.speed);
+        setAttr(mob, Attribute.ATTACK_DAMAGE, k.damage);
+        setAttr(mob, Attribute.FOLLOW_RANGE, k.followRange);
+        setAttr(mob, Attribute.SCALE, k.scale);
+        mob.setSilent(k.silent);
+        if (k.behavior == MobKind.Behavior.STALKER || k.behavior == MobKind.Behavior.WATCHER) {
+            // These two are driven only by this plugin, not by the vanilla brain.
+            Bukkit.getMobGoals().removeAllGoals(mob);
+            mob.setTarget(null);
+        }
+    }
+
+    private static void setAttr(Mob mob, Attribute attribute, double value) {
+        AttributeInstance inst = mob.getAttribute(attribute);
+        if (inst == null) {
+            mob.registerAttribute(attribute);
+            inst = mob.getAttribute(attribute);
+        }
+        if (inst != null) {
+            inst.setBaseValue(value);
+        }
+    }
+
+    private void adopt(Entity entity) {
+        if (!(entity instanceof Mob mob) || tracked.containsKey(mob.getUniqueId())) {
+            return;
+        }
+        String id = mob.getPersistentDataContainer().get(kindKey, PersistentDataType.STRING);
+        if (id == null) {
+            return;
+        }
+        MobKind k = kinds.get(id);
+        if (k == null) {
+            return;
+        }
+        Tracked t = new Tracked(mob, k);
+        tracked.put(mob.getUniqueId(), t);
+        prepare(t);
+    }
+
+    @EventHandler
+    public void onAdd(EntityAddToWorldEvent e) {
+        Entity entity = e.getEntity();
+        // One tick later the entity is fully in the world and safe to modify.
+        Bukkit.getScheduler().runTask(this, () -> {
+            if (entity.isValid()) {
+                adopt(entity);
+            }
+        });
+    }
+
+    @EventHandler
+    public void onRemove(EntityRemoveFromWorldEvent e) {
+        tracked.remove(e.getEntity().getUniqueId());
+    }
+
+    // ------------------------------------------------------------------ behaviour loop
+
+    private void step() {
+        tick += STEP;
+        List<Tracked> snapshot = new ArrayList<>(tracked.values());
+        for (Tracked t : snapshot) {
+            Mob mob = t.mob;
+            if (!mob.isValid() || mob.isDead()) {
+                tracked.remove(mob.getUniqueId());
+                continue;
+            }
+            if (despawnAtDay && t.kind.onlyAtNight && mob.getWorld().isDayTime()) {
+                vanish(mob);
+                continue;
+            }
+            switch (t.kind.behavior) {
+                case STALKER -> stalker(t);
+                case GROWER -> grower(t);
+                case LEAPER -> leaper(t);
+                case WATCHER -> watcher(t);
+                default -> { }
+            }
+            if (mob.isValid()) {
+                sound(t);
+            }
+        }
+        for (Iterator<Tracked> it = tracked.values().iterator(); it.hasNext();) {
+            if (!it.next().mob.isValid()) {
+                it.remove();
+            }
+        }
+    }
+
+    private void sound(Tracked t) {
+        MobKind k = t.kind;
+        if (k.soundKey == null || k.soundKey.isEmpty() || tick - t.lastSound < k.soundInterval) {
+            return;
+        }
+        t.lastSound = tick;
+        Location at = t.mob.getLocation();
+        double r2 = k.soundRadius * k.soundRadius;
+        for (Player p : t.mob.getWorld().getPlayers()) {
+            double d2 = p.getLocation().distanceSquared(at);
+            if (d2 > r2) {
+                continue;
+            }
+            double closeness = 1.0 - Math.sqrt(d2) / k.soundRadius;
+            float volume = (float) (k.soundVolume * (0.35 + 0.65 * closeness));
+            // Played at the listener so the volume follows the distance we computed.
+            p.playSound(p.getLocation(), k.soundKey, SoundCategory.HOSTILE, volume, k.soundPitch);
+        }
+    }
+
+    private void stalker(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        Pathfinder pf = mob.getPathfinder();
+        Player target = nearestPlayer(mob, k.range);
+        if (target == null) {
+            pf.stopPathfinding();
+            return;
+        }
+        mob.lookAt(target);
+        double dist = mob.getLocation().distance(target.getLocation());
+        if (isWatched(mob)) {
+            if (dist < k.fleeDistance) {
+                if (tick >= t.fleeUntil) {
+                    t.fleeUntil = tick + 10;
+                    flee(mob, target, k.fleeSpeed);
+                }
+            } else if (tick >= t.fleeUntil) {
+                pf.stopPathfinding();
+            }
+            return;
+        }
+        t.fleeUntil = 0;
+        if (dist > k.attackReach) {
+            pf.moveTo(target, k.approachSpeed);
+        } else {
+            pf.stopPathfinding();
+            if (tick - t.lastAttack >= 20) {
+                t.lastAttack = tick;
+                mob.swingMainHand();
+                mob.attack(target);
+            }
+        }
+    }
+
+    private void flee(Mob mob, Player from, double speed) {
+        Location here = mob.getLocation();
+        Vector away = here.toVector().subtract(from.getLocation().toVector()).setY(0);
+        if (away.lengthSquared() < 0.01) {
+            away = new Vector(1, 0, 0);
+        }
+        away.normalize();
+        World w = mob.getWorld();
+        // Straight away first, then increasingly sideways. If nothing works the mob is cornered.
+        double[] angles = {0, 40, -40, 80, -80};
+        for (double angle : angles) {
+            Vector dir = away.clone().rotateAroundY(Math.toRadians(angle)).multiply(12);
+            Location dest = here.clone().add(dir);
+            int top = w.getHighestBlockYAt(dest, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+            if (Math.abs(top - here.getY()) <= 8) {
+                dest.setY(top);
+            }
+            if (mob.getPathfinder().moveTo(dest, speed)) {
+                return;
+            }
+        }
+    }
+
+    private void grower(Tracked t) {
+        if (tick % 10 != 0) {
+            return;
+        }
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        boolean chasing = mob.getTarget() instanceof Player;
+        double perStep = (10.0 / 20.0) / k.growSeconds;
+        t.growth += chasing ? perStep : -perStep / 2.0;
+        t.growth = Math.max(0.0, Math.min(1.0, t.growth));
+        setAttr(mob, Attribute.SCALE, k.scale + (k.maxScale - k.scale) * t.growth);
+        setAttr(mob, Attribute.MOVEMENT_SPEED, k.speed * (1.0 + k.speedBonus * t.growth));
+        setAttr(mob, Attribute.ATTACK_DAMAGE, k.damage * (1.0 + k.damageBonus * t.growth));
+    }
+
+    private void leaper(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        LivingEntity target = mob.getTarget();
+        if (target == null || !target.isValid() || tick - t.lastLeap < k.leapCooldown || !mob.isOnGround()) {
+            return;
+        }
+        if (!target.getWorld().equals(mob.getWorld())) {
+            return;
+        }
+        Vector dir = target.getLocation().toVector().subtract(mob.getLocation().toVector());
+        double dist = dir.length();
+        if (dist < k.leapMin || dist > k.leapMax || !mob.hasLineOfSight(target)) {
+            return;
+        }
+        t.lastLeap = tick;
+        dir.setY(0);
+        if (dir.lengthSquared() < 0.01) {
+            return;
+        }
+        mob.setVelocity(dir.normalize().multiply(k.leapHorizontal).setY(k.leapVertical));
+    }
+
+    private void watcher(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        mob.getPathfinder().stopPathfinding();
+        Player target = nearestPlayer(mob, k.range);
+        if (target == null) {
+            t.seenTicks = 0;
+            return;
+        }
+        mob.lookAt(target);
+        if (mob.getLocation().distance(target.getLocation()) < k.vanishDistance) {
+            vanish(mob);
+            return;
+        }
+        if (k.stareSeconds > 0) {
+            t.seenTicks = isWatched(mob) ? t.seenTicks + STEP : 0;
+            if (t.seenTicks >= k.stareSeconds * 20) {
+                vanish(mob);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    private static boolean counts(Player p) {
+        return p.isValid() && !p.isDead() && p.getGameMode() != GameMode.SPECTATOR;
+    }
+
+    private Player nearestPlayer(Mob mob, double range) {
+        Player best = null;
+        double bestD2 = range * range;
+        Location at = mob.getLocation();
+        for (Player p : mob.getWorld().getPlayers()) {
+            if (!counts(p)) {
+                continue;
+            }
+            double d2 = p.getLocation().distanceSquared(at);
+            if (d2 <= bestD2) {
+                bestD2 = d2;
+                best = p;
+            }
+        }
+        return best;
+    }
+
+    /** True when at least one player has the mob inside their view cone with a clear line of sight. */
+    private boolean isWatched(Mob mob) {
+        Vector mobPos = mob.getEyeLocation().toVector();
+        for (Player p : mob.getWorld().getPlayers()) {
+            if (!counts(p)) {
+                continue;
+            }
+            Location eye = p.getEyeLocation();
+            Vector to = mobPos.clone().subtract(eye.toVector());
+            double d2 = to.lengthSquared();
+            if (d2 > 80 * 80) {
+                continue;
+            }
+            if (d2 < 0.01) {
+                return true;
+            }
+            if (eye.getDirection().dot(to.normalize()) > viewCos && p.hasLineOfSight(mob)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void vanish(Mob mob) {
+        Location at = mob.getLocation().add(0, mob.getHeight() / 2.0, 0);
+        World w = mob.getWorld();
+        w.spawnParticle(Particle.LARGE_SMOKE, at, 40, 0.4, mob.getHeight() / 3.0, 0.4, 0.02);
+        w.playSound(at, "minecraft:entity.enderman.teleport", 0.7f, 0.5f);
+        tracked.remove(mob.getUniqueId());
+        mob.remove();
+    }
+
+    // ------------------------------------------------------------------ command
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length == 0) {
+            sender.sendMessage("/nt spawn <mob> | list | killall | reload");
+            return true;
+        }
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "reload" -> {
+                loadKinds();
+                sender.sendMessage("NightTerrors: config reloaded, " + kinds.size() + " mob types.");
+            }
+            case "list" -> {
+                sender.sendMessage("Mob types: " + String.join(", ", kinds.keySet()));
+                sender.sendMessage("Alive now: " + tracked.size());
+            }
+            case "killall" -> {
+                int n = 0;
+                for (Tracked t : new ArrayList<>(tracked.values())) {
+                    t.mob.remove();
+                    n++;
+                }
+                tracked.clear();
+                sender.sendMessage("NightTerrors: removed " + n + " mobs.");
+            }
+            case "spawn" -> {
+                if (!(sender instanceof Player p)) {
+                    sender.sendMessage("Only a player can use this.");
+                    return true;
+                }
+                MobKind k = args.length > 1 ? kinds.get(args[1].toLowerCase(Locale.ROOT)) : null;
+                if (k == null) {
+                    sender.sendMessage("Unknown mob. Available: " + String.join(", ", kinds.keySet()));
+                    return true;
+                }
+                // Ten blocks in front of the player, on the ground.
+                Vector dir = p.getLocation().getDirection().setY(0);
+                if (dir.lengthSquared() < 0.01) {
+                    dir = new Vector(1, 0, 0);
+                }
+                Location loc = p.getLocation().add(dir.normalize().multiply(10));
+                int top = p.getWorld().getHighestBlockYAt(loc, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+                if (Math.abs(top - loc.getY()) <= 10) {
+                    loc.setY(top);
+                }
+                Mob mob = spawn(k, loc);
+                sender.sendMessage(mob != null ? "Spawned " + k.id + "." : "Spawn failed, see console.");
+            }
+            default -> sender.sendMessage("/nt spawn <mob> | list | killall | reload");
+        }
+        return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        List<String> out = new ArrayList<>();
+        if (args.length == 1) {
+            for (String s : List.of("spawn", "list", "killall", "reload")) {
+                if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
+                    out.add(s);
+                }
+            }
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("spawn")) {
+            for (String s : kinds.keySet()) {
+                if (s.startsWith(args[1].toLowerCase(Locale.ROOT))) {
+                    out.add(s);
+                }
+            }
+        }
+        return out;
+    }
+}

@@ -1,0 +1,162 @@
+# NightTerrors - strasidelni mobove, kteri nahrazuji prirozene spawny.
+# Po zmene: /nt reload
+#
+# U kazdeho moba:
+#   entity          vanilla telo (ZOMBIE, SPIDER, ENDERMAN, ...)
+#   replaces        ktere prirozene spawny muze nahradit
+#   chance-percent  sance v % na jeden spawn (1 = kazdy cca 100. mob)
+#   worlds          seznam svetu, [] = vsechny
+#   only-at-night   spawn jen v noci
+#   surface-only    spawn jen pod otevrenym nebem (ne v jeskynich)
+#   max-alive       kolik jich muze zit najednou v jednom svete
+#   speed           vanilla atribut rychlosti (zombie ma 0.23)
+#   scale           velikost (1.0 = normalni)
+#   sound.key       libovolny zvuk hry nebo resource packu
+#   behavior.type   STALKER | GROWER | LEAPER | WATCHER | NONE
+
+settings:
+  despawn-at-day: true     # za usvitu zmizi v koure
+  view-angle: 65           # pulka zorneho uhlu hrace ve stupnich (pro STALKER a WATCHER)
+
+mobs:
+  stalker:
+    enabled: true
+    entity: WITHER_SKELETON
+    replaces: [ZOMBIE]
+    chance-percent: 1.0
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 3
+    health: 40
+    damage: 9
+    speed: 0.3
+    scale: 1.4
+    follow-range: 48
+    silent: true
+    clear-equipment: true
+    sound:
+      key: "minecraft:entity.warden.heartbeat"
+      radius: 20
+      interval-ticks: 30
+      volume: 1.0
+      pitch: 0.7
+    behavior:
+      type: STALKER
+      range: 48            # na jakou vzdalenost si vybere hrace
+      approach-speed: 1.6  # nasobic rychlosti, kdyz se nikdo nediva
+      flee-speed: 2.5      # nasobic rychlosti pri uteku
+      flee-distance: 9     # kdyz se divas a jsi bliz nez tohle, utika
+      attack-reach: 2.5
+
+  giant_spider:
+    enabled: true
+    entity: SPIDER
+    replaces: [SPIDER]
+    chance-percent: 1.0
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 2
+    health: 50
+    damage: 5
+    speed: 0.3
+    scale: 1.3
+    follow-range: 40
+    silent: true
+    clear-equipment: false
+    sound:
+      key: "minecraft:entity.spider.ambient"
+      radius: 24
+      interval-ticks: 50
+      volume: 1.0
+      pitch: 0.5
+    behavior:
+      type: GROWER
+      max-scale: 4.5       # velikost po plnem narustu
+      grow-seconds: 25     # jak dlouho te musi honit, nez doroste
+      speed-bonus: 0.6     # +60 % rychlosti pri plne velikosti
+      damage-bonus: 1.5    # +150 % poskozeni pri plne velikosti
+
+  crawler:
+    enabled: true
+    entity: SILVERFISH
+    replaces: [ZOMBIE, SKELETON]
+    chance-percent: 1.0
+    worlds: []
+    only-at-night: true
+    surface-only: false
+    max-alive: 4
+    health: 24
+    damage: 6
+    speed: 0.38
+    scale: 3.5
+    follow-range: 32
+    silent: true
+    clear-equipment: false
+    sound:
+      key: "minecraft:entity.silverfish.ambient"
+      radius: 14
+      interval-ticks: 35
+      volume: 1.0
+      pitch: 0.5
+    behavior:
+      type: LEAPER
+      min-distance: 3
+      max-distance: 8
+      cooldown-ticks: 60
+      horizontal: 1.1
+      vertical: 0.35
+
+  ripper:
+    enabled: true
+    entity: ZOGLIN
+    replaces: [CREEPER]
+    chance-percent: 1.0
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 2
+    health: 60
+    damage: 10
+    speed: 0.36
+    scale: 1.2
+    follow-range: 40
+    silent: true
+    clear-equipment: false
+    sound:
+      key: "minecraft:entity.ravager.roar"
+      radius: 24
+      interval-ticks: 110
+      volume: 0.8
+      pitch: 0.6
+    behavior:
+      type: NONE
+
+  watcher:
+    enabled: true
+    entity: ENDERMAN
+    replaces: [SKELETON]
+    chance-percent: 1.0
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 3
+    health: 40
+    damage: 1
+    speed: 0.3
+    scale: 1.5
+    follow-range: 64
+    silent: true
+    clear-equipment: false
+    sound:
+      key: "minecraft:ambient.cave"
+      radius: 28
+      interval-ticks: 200
+      volume: 1.0
+      pitch: 0.8
+    behavior:
+      type: WATCHER
+      range: 64            # na jakou dalku te sleduje pohledem
+      vanish-distance: 7   # kdyz prijdes bliz, zmizi
+      stare-seconds: 6     # kdyz na nej takhle dlouho zira nekdo, zmizi (0 = vypnuto)
