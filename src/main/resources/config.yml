@@ -162,6 +162,7 @@ mobs:
       type: WATCHER
       range: 64            # na jakou dalku te sleduje pohledem
       vanish-distance: 7   # kdyz prijdes bliz, zmizi
-      stare-seconds: 6     # za jak dlouho divani dosahne problikavani a zvuk maxima; pak zakrici, ubere a zmizi (0 = vypnuto)
+      effect-range: 24     # kdyz na tebe zira z teto vzdalenosti a vidi te, zacne ti problikavat obrazovka a silit zvuk
+      stare-seconds: 10    # za jak dlouho efekt dosahne maxima; pak zakrici, ubere a zmizi (0 = vypnuto). Schovej se za zed.
       stare-damage: 6      # poskozeni pri maximu (6 = 3 srdce)
       stare-sound: "minecraft:block.portal.ambient"

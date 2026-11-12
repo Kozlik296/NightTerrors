@@ -60,6 +60,7 @@ final class MobKind {
     double vanishDistance;
     double stareSeconds;
     double stareDamage;
+    double effectRange;
     String stareSound;
 
     private MobKind(String id) {
@@ -124,10 +125,11 @@ final class MobKind {
         k.leapHorizontal = s.getDouble("behavior.horizontal", 1.0);
         k.leapVertical = s.getDouble("behavior.vertical", 0.35);
         k.faceBlindTicks = s.getInt("behavior.face-blind-ticks", 30);
+        k.effectRange = s.getDouble("behavior.effect-range", 24);
         k.stareDamage = s.getDouble("behavior.stare-damage", 6);
         k.stareSound = s.getString("behavior.stare-sound", "minecraft:block.portal.ambient");
         k.vanishDistance = s.getDouble("behavior.vanish-distance", 7);
-        k.stareSeconds = s.getDouble("behavior.stare-seconds", 6);
+        k.stareSeconds = s.getDouble("behavior.stare-seconds", 10);
         return k;
     }
 

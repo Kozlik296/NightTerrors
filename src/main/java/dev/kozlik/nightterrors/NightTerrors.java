@@ -499,10 +499,12 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         if (k.stareSeconds <= 0) {
             return;
         }
-        double range2 = k.range * k.range;
+        // The effect hits the player the watcher is staring at, whether or not they look back.
+        // Breaking line of sight (a wall) or leaving the effect range stops it.
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        for (Player p : mob.getWorld().getPlayers()) {
-            if (!counts(p) || p.getLocation().distanceSquared(mob.getLocation()) > range2 || !sees(p, mob)) {
+        for (Player p : List.of(target)) {
+            if (p.getLocation().distanceSquared(mob.getLocation()) > k.effectRange * k.effectRange
+                    || !mob.hasLineOfSight(p)) {
                 continue;
             }
             UUID id = p.getUniqueId();
