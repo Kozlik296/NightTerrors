@@ -29,6 +29,7 @@ final class MobKind {
     double followRange;
     boolean silent;
     boolean clearEquipment;
+    double knockback;
 
     String soundKey;
     double soundRadius;
@@ -54,9 +55,12 @@ final class MobKind {
     int leapCooldown;
     double leapHorizontal;
     double leapVertical;
+    int faceBlindTicks;
     // WATCHER
     double vanishDistance;
     double stareSeconds;
+    double stareDamage;
+    String stareSound;
 
     private MobKind(String id) {
         this.id = id;
@@ -91,6 +95,7 @@ final class MobKind {
         k.followRange = s.getDouble("follow-range", 32);
         k.silent = s.getBoolean("silent", true);
         k.clearEquipment = s.getBoolean("clear-equipment", false);
+        k.knockback = s.getDouble("knockback", 0);
 
         k.soundKey = s.getString("sound.key", "");
         k.soundRadius = s.getDouble("sound.radius", 16);
@@ -118,6 +123,9 @@ final class MobKind {
         k.leapCooldown = s.getInt("behavior.cooldown-ticks", 60);
         k.leapHorizontal = s.getDouble("behavior.horizontal", 1.0);
         k.leapVertical = s.getDouble("behavior.vertical", 0.35);
+        k.faceBlindTicks = s.getInt("behavior.face-blind-ticks", 30);
+        k.stareDamage = s.getDouble("behavior.stare-damage", 6);
+        k.stareSound = s.getString("behavior.stare-sound", "minecraft:block.portal.ambient");
         k.vanishDistance = s.getDouble("behavior.vanish-distance", 7);
         k.stareSeconds = s.getDouble("behavior.stare-seconds", 6);
         return k;

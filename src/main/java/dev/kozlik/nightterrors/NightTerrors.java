@@ -4,11 +4,14 @@ import com.destroystokyo.paper.entity.Pathfinder;
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Bukkit;
@@ -25,6 +28,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Ageable;
+import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -34,9 +38,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 public final class NightTerrors extends JavaPlugin implements Listener {
@@ -53,7 +62,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         long lastAttack;
         long lastLeap;
         long fleeUntil;
-        int seenTicks;
+        boolean leapHit = true;
 
         Tracked(Mob mob, MobKind kind) {
             this.mob = mob;
@@ -63,6 +72,9 @@ public final class NightTerrors extends JavaPlugin implements Listener {
 
     private final Map<String, MobKind> kinds = new LinkedHashMap<>();
     private final Map<UUID, Tracked> tracked = new LinkedHashMap<>();
+    /** Per player: how far the watcher's stare effect has built up, 0 to 1. */
+    private final Map<UUID, Double> stare = new HashMap<>();
+    private final Set<UUID> staringNow = new HashSet<>();
     private NamespacedKey kindKey;
     private boolean despawnAtDay;
     private double viewCos;
@@ -280,6 +292,59 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 it.remove();
             }
         }
+        // Players who looked away calm down again.
+        for (Iterator<Map.Entry<UUID, Double>> it = stare.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<UUID, Double> en = it.next();
+            if (!staringNow.contains(en.getKey())) {
+                double v = en.getValue() - 0.02;
+                if (v <= 0) {
+                    it.remove();
+                } else {
+                    en.setValue(v);
+                }
+            }
+        }
+        staringNow.clear();
+    }
+
+    // ------------------------------------------------------------------ damage rules
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDamage(EntityDamageEvent e) {
+        // Rain and water must not kill a mob that only borrows the enderman body.
+        if (e.getCause() == EntityDamageEvent.DamageCause.DROWNING
+                && e.getEntity() instanceof Enderman
+                && tracked.containsKey(e.getEntity().getUniqueId())) {
+            e.setCancelled(true);
+            return;
+        }
+        if (e instanceof EntityDamageByEntityEvent by && e.getEntity() instanceof Player victim) {
+            Tracked t = tracked.get(by.getDamager().getUniqueId());
+            if (t != null && t.kind.knockback > 0) {
+                Vector push = victim.getLocation().toVector().subtract(t.mob.getLocation().toVector()).setY(0);
+                if (push.lengthSquared() < 0.01) {
+                    push = t.mob.getLocation().getDirection().setY(0);
+                }
+                if (push.lengthSquared() < 0.01) {
+                    return;
+                }
+                Vector v = push.normalize().multiply(0.6 * t.kind.knockback).setY(0.3 + 0.1 * t.kind.knockback);
+                // Next tick, so it is added on top of the vanilla knockback instead of being overwritten.
+                Bukkit.getScheduler().runTask(this, () -> {
+                    if (victim.isValid()) {
+                        victim.setVelocity(victim.getVelocity().add(v));
+                    }
+                });
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onTeleport(EntityTeleportEvent e) {
+        // Stops the enderman body from blinking away when wet or hit.
+        if (tracked.containsKey(e.getEntity().getUniqueId())) {
+            e.setCancelled(true);
+        }
     }
 
     private void sound(Tracked t) {
@@ -370,7 +435,10 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         double perStep = (10.0 / 20.0) / k.growSeconds;
         t.growth += chasing ? perStep : -perStep / 2.0;
         t.growth = Math.max(0.0, Math.min(1.0, t.growth));
-        setAttr(mob, Attribute.SCALE, k.scale + (k.maxScale - k.scale) * t.growth);
+        double scale = k.scale + (k.maxScale - k.scale) * t.growth;
+        setAttr(mob, Attribute.SCALE, scale);
+        // A big body needs to step over blocks, otherwise it keeps getting stuck on terrain.
+        setAttr(mob, Attribute.STEP_HEIGHT, Math.max(0.6, Math.min(3.0, 0.6 * scale)));
         setAttr(mob, Attribute.MOVEMENT_SPEED, k.speed * (1.0 + k.speedBonus * t.growth));
         setAttr(mob, Attribute.ATTACK_DAMAGE, k.damage * (1.0 + k.damageBonus * t.growth));
     }
@@ -379,23 +447,40 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         Mob mob = t.mob;
         MobKind k = t.kind;
         LivingEntity target = mob.getTarget();
-        if (target == null || !target.isValid() || tick - t.lastLeap < k.leapCooldown || !mob.isOnGround()) {
+        if (target == null || !target.isValid() || !target.getWorld().equals(mob.getWorld())) {
             return;
         }
-        if (!target.getWorld().equals(mob.getWorld())) {
+        Location face = target.getEyeLocation();
+        // Mid-air: the moment it reaches the face it bites and blinds for a second.
+        if (!t.leapHit && tick - t.lastLeap <= 20) {
+            if (mob.getLocation().add(0, mob.getHeight() / 2.0, 0).distanceSquared(face) <= 1.8 * 1.8) {
+                t.leapHit = true;
+                mob.attack(target);
+                if (k.faceBlindTicks > 0) {
+                    target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, k.faceBlindTicks, 0, false, false, false));
+                }
+            }
             return;
         }
-        Vector dir = target.getLocation().toVector().subtract(mob.getLocation().toVector());
+        if (tick - t.lastLeap < k.leapCooldown || !mob.isOnGround()) {
+            return;
+        }
+        Vector dir = face.toVector().subtract(mob.getLocation().toVector());
+        double dy = dir.getY();
+        dir.setY(0);
         double dist = dir.length();
-        if (dist < k.leapMin || dist > k.leapMax || !mob.hasLineOfSight(target)) {
+        if (dist < k.leapMin || dist > k.leapMax || dist < 0.1 || !mob.hasLineOfSight(target)) {
             return;
         }
         t.lastLeap = tick;
-        dir.setY(0);
-        if (dir.lengthSquared() < 0.01) {
-            return;
-        }
-        mob.setVelocity(dir.normalize().multiply(k.leapHorizontal).setY(k.leapVertical));
+        t.leapHit = false;
+        // Throw arc: flight time from the horizontal speed, then the upward speed that
+        // reaches eye height in that time under gravity (0.08 per tick, half of it per tick squared).
+        double h = Math.max(0.3, k.leapHorizontal);
+        double time = dist / (h * 0.8);
+        double vy = (dy + 0.04 * time * time) / time;
+        vy = Math.max(k.leapVertical, Math.min(1.1, vy));
+        mob.setVelocity(dir.normalize().multiply(h).setY(vy));
     }
 
     private void watcher(Tracked t) {
@@ -404,7 +489,6 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         mob.getPathfinder().stopPathfinding();
         Player target = nearestPlayer(mob, k.range);
         if (target == null) {
-            t.seenTicks = 0;
             return;
         }
         mob.lookAt(target);
@@ -412,10 +496,39 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             vanish(mob);
             return;
         }
-        if (k.stareSeconds > 0) {
-            t.seenTicks = isWatched(mob) ? t.seenTicks + STEP : 0;
-            if (t.seenTicks >= k.stareSeconds * 20) {
+        if (k.stareSeconds <= 0) {
+            return;
+        }
+        double range2 = k.range * k.range;
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        for (Player p : mob.getWorld().getPlayers()) {
+            if (!counts(p) || p.getLocation().distanceSquared(mob.getLocation()) > range2 || !sees(p, mob)) {
+                continue;
+            }
+            UUID id = p.getUniqueId();
+            if (!staringNow.add(id)) {
+                continue; // already handled by another watcher this step
+            }
+            double level = Math.min(1.0, stare.getOrDefault(id, 0.0) + STEP / (k.stareSeconds * 20.0));
+            stare.put(id, level);
+            // Screen flicker: short blindness flashes, more often and longer as the level rises.
+            if (rnd.nextDouble() < 0.08 + 0.45 * level) {
+                int ticks = 4 + (int) (14 * level);
+                p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, ticks, 0, false, false, false));
+            }
+            if (tick % 10 == 0 && k.stareSound != null && !k.stareSound.isEmpty()) {
+                p.playSound(p.getLocation(), k.stareSound, SoundCategory.HOSTILE,
+                        (float) (0.1 + 1.4 * level), (float) (0.5 + 0.7 * level));
+            }
+            if (level >= 1.0) {
+                stare.remove(id);
+                p.playSound(p.getLocation(), "minecraft:entity.enderman.scream", SoundCategory.HOSTILE, 1.5f, 0.5f);
+                p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
+                if (k.stareDamage > 0 && p.getGameMode() != GameMode.CREATIVE) {
+                    p.damage(k.stareDamage);
+                }
                 vanish(mob);
+                return;
             }
         }
     }
@@ -443,23 +556,24 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         return best;
     }
 
-    /** True when at least one player has the mob inside their view cone with a clear line of sight. */
+    /** True when the player has the mob inside their view cone with a clear line of sight. */
+    private boolean sees(Player p, Mob mob) {
+        Location eye = p.getEyeLocation();
+        Vector to = mob.getEyeLocation().toVector().subtract(eye.toVector());
+        double d2 = to.lengthSquared();
+        if (d2 > 80 * 80) {
+            return false;
+        }
+        if (d2 < 0.01) {
+            return true;
+        }
+        return eye.getDirection().dot(to.normalize()) > viewCos && p.hasLineOfSight(mob);
+    }
+
+    /** True when at least one player sees the mob. */
     private boolean isWatched(Mob mob) {
-        Vector mobPos = mob.getEyeLocation().toVector();
         for (Player p : mob.getWorld().getPlayers()) {
-            if (!counts(p)) {
-                continue;
-            }
-            Location eye = p.getEyeLocation();
-            Vector to = mobPos.clone().subtract(eye.toVector());
-            double d2 = to.lengthSquared();
-            if (d2 > 80 * 80) {
-                continue;
-            }
-            if (d2 < 0.01) {
-                return true;
-            }
-            if (eye.getDirection().dot(to.normalize()) > viewCos && p.hasLineOfSight(mob)) {
+            if (counts(p) && sees(p, mob)) {
                 return true;
             }
         }
@@ -480,7 +594,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage("/nt spawn <mob> | list | killall | reload");
+            sender.sendMessage("/nt spawn <mob> | kill <mob> | list | killall | reload");
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
@@ -500,6 +614,18 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 }
                 tracked.clear();
                 sender.sendMessage("NightTerrors: removed " + n + " mobs.");
+            }
+            case "kill" -> {
+                String id = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+                int n = 0;
+                for (Tracked t : new ArrayList<>(tracked.values())) {
+                    if (t.kind.id.equals(id)) {
+                        tracked.remove(t.mob.getUniqueId());
+                        t.mob.remove();
+                        n++;
+                    }
+                }
+                sender.sendMessage("NightTerrors: removed " + n + " x " + id + ".");
             }
             case "spawn" -> {
                 if (!(sender instanceof Player p)) {
@@ -524,7 +650,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 Mob mob = spawn(k, loc);
                 sender.sendMessage(mob != null ? "Spawned " + k.id + "." : "Spawn failed, see console.");
             }
-            default -> sender.sendMessage("/nt spawn <mob> | list | killall | reload");
+            default -> sender.sendMessage("/nt spawn <mob> | kill <mob> | list | killall | reload");
         }
         return true;
     }
@@ -533,12 +659,12 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("spawn", "list", "killall", "reload")) {
+            for (String s : List.of("spawn", "kill", "list", "killall", "reload")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
                     out.add(s);
                 }
             }
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("spawn")) {
+        } else if (args.length == 2 && (args[0].equalsIgnoreCase("spawn") || args[0].equalsIgnoreCase("kill"))) {
             for (String s : kinds.keySet()) {
                 if (s.startsWith(args[1].toLowerCase(Locale.ROOT))) {
                     out.add(s);
