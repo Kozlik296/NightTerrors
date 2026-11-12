@@ -1,0 +1,12 @@
+{
+  "pack": {
+    "description": "NightTerrors sounds",
+    "pack_format": 64,
+    "supported_formats": [
+      34,
+      9999
+    ],
+    "min_format": 34,
+    "max_format": 9999
+  }
+}

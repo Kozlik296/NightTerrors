@@ -62,6 +62,7 @@ final class MobKind {
     double stareDamage;
     double effectRange;
     String stareSound;
+    String stareScream;
 
     private MobKind(String id) {
         this.id = id;
@@ -127,7 +128,8 @@ final class MobKind {
         k.faceBlindTicks = s.getInt("behavior.face-blind-ticks", 30);
         k.effectRange = s.getDouble("behavior.effect-range", 24);
         k.stareDamage = s.getDouble("behavior.stare-damage", 6);
-        k.stareSound = s.getString("behavior.stare-sound", "minecraft:block.portal.ambient");
+        k.stareSound = s.getString("behavior.stare-sound", "nightterrors:static");
+        k.stareScream = s.getString("behavior.stare-scream", "nightterrors:scream");
         k.vanishDistance = s.getDouble("behavior.vanish-distance", 7);
         k.stareSeconds = s.getDouble("behavior.stare-seconds", 10);
         return k;

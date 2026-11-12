@@ -19,6 +19,13 @@ settings:
   despawn-at-day: true     # za usvitu zmizi v koure
   view-angle: 65           # pulka zorneho uhlu hrace ve stupnich (pro STALKER a WATCHER)
 
+# Zvuky pluginu jsou v malem resource packu, ktery se hraci nabidne pri pripojeni.
+# Kdo ho odmitne, vlastni zvuky neuslysi.
+resource-pack:
+  enabled: true
+  url: "https://raw.githubusercontent.com/Kozlik296/NightTerrors/main/pack/NightTerrors-pack.zip"
+  sha1: "b304fff6c2b017537327f15c04adb9c8deedf8f6"
+
 mobs:
   stalker:
     enabled: true
@@ -37,11 +44,11 @@ mobs:
     silent: true
     clear-equipment: true
     sound:
-      key: "minecraft:entity.warden.heartbeat"
+      key: "nightterrors:stalker"
       radius: 20
-      interval-ticks: 30
+      interval-ticks: 50
       volume: 1.0
-      pitch: 0.7
+      pitch: 1.0
     behavior:
       type: STALKER
       range: 48            # na jakou vzdalenost si vybere hrace
@@ -67,11 +74,11 @@ mobs:
     silent: true
     clear-equipment: false
     sound:
-      key: "minecraft:entity.spider.ambient"
+      key: "nightterrors:spider"
       radius: 24
       interval-ticks: 50
       volume: 1.0
-      pitch: 0.5
+      pitch: 1.0
     behavior:
       type: GROWER
       max-scale: 4.5       # velikost po plnem narustu
@@ -96,11 +103,11 @@ mobs:
     silent: true
     clear-equipment: false
     sound:
-      key: "minecraft:entity.silverfish.ambient"
+      key: "nightterrors:crawler"
       radius: 14
-      interval-ticks: 35
+      interval-ticks: 36
       volume: 1.0
-      pitch: 0.5
+      pitch: 1.0
     behavior:
       type: LEAPER
       min-distance: 3
@@ -128,11 +135,11 @@ mobs:
     silent: true
     clear-equipment: false
     sound:
-      key: "minecraft:entity.ravager.roar"
+      key: "nightterrors:ripper"
       radius: 24
-      interval-ticks: 110
-      volume: 0.8
-      pitch: 0.6
+      interval-ticks: 70
+      volume: 1.0
+      pitch: 1.0
     behavior:
       type: NONE
 
@@ -153,11 +160,11 @@ mobs:
     silent: true
     clear-equipment: false
     sound:
-      key: "minecraft:ambient.cave"
+      key: "nightterrors:watcher"
       radius: 28
-      interval-ticks: 200
+      interval-ticks: 110
       volume: 1.0
-      pitch: 0.8
+      pitch: 1.0
     behavior:
       type: WATCHER
       range: 64            # na jakou dalku te sleduje pohledem
@@ -165,4 +172,5 @@ mobs:
       effect-range: 24     # kdyz na tebe zira z teto vzdalenosti a vidi te, zacne ti problikavat obrazovka a silit zvuk
       stare-seconds: 10    # za jak dlouho efekt dosahne maxima; pak zakrici, ubere a zmizi (0 = vypnuto). Schovej se za zed.
       stare-damage: 6      # poskozeni pri maximu (6 = 3 srdce)
-      stare-sound: "minecraft:block.portal.ambient"
+      stare-sound: "nightterrors:static"
+      stare-scream: "nightterrors:scream"

@@ -1,0 +1,58 @@
+{
+  "stalker": {
+    "sounds": [
+      {
+        "name": "nightterrors:stalker",
+        "stream": false
+      }
+    ]
+  },
+  "spider": {
+    "sounds": [
+      {
+        "name": "nightterrors:spider",
+        "stream": false
+      }
+    ]
+  },
+  "crawler": {
+    "sounds": [
+      {
+        "name": "nightterrors:crawler",
+        "stream": false
+      }
+    ]
+  },
+  "ripper": {
+    "sounds": [
+      {
+        "name": "nightterrors:ripper",
+        "stream": false
+      }
+    ]
+  },
+  "watcher": {
+    "sounds": [
+      {
+        "name": "nightterrors:watcher",
+        "stream": false
+      }
+    ]
+  },
+  "static": {
+    "sounds": [
+      {
+        "name": "nightterrors:static",
+        "stream": false
+      }
+    ]
+  },
+  "scream": {
+    "sounds": [
+      {
+        "name": "nightterrors:scream",
+        "stream": false
+      }
+    ]
+  }
+}

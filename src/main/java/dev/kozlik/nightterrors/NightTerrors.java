@@ -41,6 +41,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -77,6 +78,8 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     private final Set<UUID> staringNow = new HashSet<>();
     private NamespacedKey kindKey;
     private boolean despawnAtDay;
+    private String packUrl = "";
+    private byte[] packHash;
     private double viewCos;
     private long tick;
 
@@ -99,6 +102,8 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         reloadConfig();
         kinds.clear();
         despawnAtDay = getConfig().getBoolean("settings.despawn-at-day", true);
+        packUrl = getConfig().getBoolean("resource-pack.enabled", true) ? getConfig().getString("resource-pack.url", "") : "";
+        packHash = parseHex(getConfig().getString("resource-pack.sha1", ""));
         viewCos = Math.cos(Math.toRadians(getConfig().getDouble("settings.view-angle", 65)));
         ConfigurationSection mobs = getConfig().getConfigurationSection("mobs");
         if (mobs != null) {
@@ -524,7 +529,9 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             }
             if (level >= 1.0) {
                 stare.remove(id);
-                p.playSound(p.getLocation(), "minecraft:entity.enderman.scream", SoundCategory.HOSTILE, 1.5f, 0.5f);
+                if (k.stareScream != null && !k.stareScream.isEmpty()) {
+                    p.playSound(p.getLocation(), k.stareScream, SoundCategory.HOSTILE, 1.5f, 1.0f);
+                }
                 p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 50, 0, false, false, false));
                 if (k.stareDamage > 0 && p.getGameMode() != GameMode.CREATIVE) {
                     p.damage(k.stareDamage);
@@ -533,6 +540,38 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 return;
             }
         }
+    }
+
+    // ------------------------------------------------------------------ resource pack
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e) {
+        if (packUrl == null || packUrl.isEmpty()) {
+            return;
+        }
+        Player p = e.getPlayer();
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!p.isOnline()) {
+                return;
+            }
+            if (packHash != null) {
+                p.setResourcePack(packUrl, packHash);
+            } else {
+                p.setResourcePack(packUrl);
+            }
+        }, 20L);
+    }
+
+    /** Turns a 40-character SHA-1 text into bytes; anything else means "no hash". */
+    private static byte[] parseHex(String hex) {
+        if (hex == null || !hex.matches("[0-9a-fA-F]{40}")) {
+            return null;
+        }
+        byte[] out = new byte[20];
+        for (int i = 0; i < 20; i++) {
+            out[i] = (byte) Integer.parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------ helpers
