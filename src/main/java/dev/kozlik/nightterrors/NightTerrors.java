@@ -342,7 +342,14 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             if (mob.isValid()) {
                 sound(t);
                 if (t.rig != null) {
-                    t.rig.update(mob, lookPoint(mob));
+                    float factor = 1f;
+                    if (t.kind.behavior == MobKind.Behavior.GROWER && t.kind.scale > 0) {
+                        AttributeInstance sc = mob.getAttribute(Attribute.SCALE);
+                        if (sc != null) {
+                            factor = (float) sc.getBaseValue();
+                        }
+                    }
+                    t.rig.update(mob, lookPoint(mob), factor);
                 }
             }
         }

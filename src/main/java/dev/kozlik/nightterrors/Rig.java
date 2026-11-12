@@ -33,7 +33,7 @@ import org.joml.Vector3f;
 final class Rig {
 
     record Part(String model, float px, float py, float pz, char axis, float swing, float offset,
-                float idle, boolean look, boolean glow) { }
+                float idle, float baseYaw, boolean look, boolean glow) { }
 
     record Def(float scale, float stride, float bob, List<Part> parts) { }
 
@@ -54,7 +54,7 @@ final class Rig {
                     parts.add(new Part(p.get("model").getAsString(),
                             piv.get(0).getAsFloat(), piv.get(1).getAsFloat(), piv.get(2).getAsFloat(),
                             p.get("axis").getAsString().charAt(0), p.get("swing").getAsFloat(),
-                            p.get("offset").getAsFloat(), p.get("idle").getAsFloat(),
+                            p.get("offset").getAsFloat(), p.get("idle").getAsFloat(), p.get("yaw").getAsFloat(),
                             p.get("look").getAsBoolean(), p.get("glow").getAsBoolean()));
                 }
                 out.put(e.getKey(), new Def(o.get("scale").getAsFloat(), o.get("stride").getAsFloat(),
@@ -105,8 +105,11 @@ final class Rig {
         }
     }
 
-    /** Moves and poses all parts. {@code look} is the point the head should face, or null. */
-    void update(Mob mob, Location look) {
+    /**
+     * Moves and poses all parts. {@code look} is the point the head should face, or null.
+     * {@code factor} enlarges the whole body (1 = designed size); used by the growing spider.
+     */
+    void update(Mob mob, Location look, float factor) {
         Location loc = mob.getLocation();
         double dx = loc.getX() - lastX;
         double dz = loc.getZ() - lastZ;
@@ -124,15 +127,15 @@ final class Rig {
             want = yawTo(loc, look);
         }
         yaw += wrap(want - yaw) * 0.6f;
-        phase += (float) (moved * def.stride());
+        phase += (float) (moved * def.stride() / Math.max(0.1f, factor)); // bigger body, longer steps
         amp += ((moving ? 1f : 0f) - amp) * 0.5f;
         time++;
 
         float relYaw = 0f;
         float pitch = 0f;
         Location at = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ(), yaw + yawOffset, 0f);
-        float bob = (float) (def.bob() * Math.abs(Math.sin(phase)) * amp);
-        float s = def.scale();
+        float bob = (float) (def.bob() * Math.abs(Math.sin(phase)) * amp) * factor;
+        float s = def.scale() * factor;
         for (int i = 0; i < displays.size(); i++) {
             ItemDisplay d = displays.get(i);
             if (!d.isValid()) {
@@ -140,9 +143,12 @@ final class Rig {
             }
             Part p = def.parts().get(i);
             Quaternionf q = new Quaternionf();
+            if (p.baseYaw() != 0f) {
+                q.rotateY(p.baseYaw()); // fans the legs out around the body
+            }
             if (p.look() && look != null) {
                 relYaw = clamp(wrap(yawTo(loc, look) - yaw), -70f, 70f);
-                double up = look.getY() - (loc.getY() + p.py());
+                double up = look.getY() - (loc.getY() + p.py() * factor);
                 double flat = Math.hypot(look.getX() - loc.getX(), look.getZ() - loc.getZ());
                 pitch = clamp((float) -Math.toDegrees(Math.atan2(up, Math.max(flat, 0.01))), -40f, 40f);
                 // Minecraft yaw grows clockwise, JOML's Y rotation counter-clockwise, hence the minus.
@@ -160,7 +166,7 @@ final class Rig {
             d.teleport(at);
             d.setInterpolationDelay(0);
             d.setInterpolationDuration(3);
-            d.setTransformation(new Transformation(new Vector3f(p.px(), p.py() + bob, p.pz()), q,
+            d.setTransformation(new Transformation(new Vector3f(p.px() * factor, p.py() * factor + bob, p.pz() * factor), q,
                     new Vector3f(s, s, s), new Quaternionf()));
         }
     }
