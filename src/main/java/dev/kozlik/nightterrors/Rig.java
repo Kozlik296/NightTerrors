@@ -127,12 +127,14 @@ final class Rig {
         }
         boolean moving = moved > 0.012;
         float want = yaw;
-        if (moving) {
+        if (moved > 0.05) { // tiny shuffles must not swing the whole body around
             want = (float) Math.toDegrees(Math.atan2(-dx, dz));
         } else if (look != null) {
             want = yawTo(loc, look);
         }
-        yaw += wrap(want - yaw) * 0.6f;
+        // Big bodies turn slowly; a giant that snaps around looks like it is spinning on the spot.
+        float maxTurn = def.scale() >= 3f ? 5f : 30f;
+        yaw += clamp(wrap(want - yaw) * 0.35f, -maxTurn, maxTurn);
         phase += (float) (moved * def.stride() / Math.max(0.1f, factor)); // bigger body, longer steps
         amp += ((moving ? 1f : 0f) - amp) * 0.5f;
         time++;

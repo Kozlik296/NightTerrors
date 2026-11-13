@@ -78,6 +78,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         UUID huntId;
         long huntUntil;
         long awakeDay = -1;
+        boolean inReach;
         double lastX;
         double lastZ;
 
@@ -630,8 +631,10 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         }
         mob.lookAt(target);
         double dist = mob.getLocation().distance(target.getLocation());
-        if (dist > k.attackReach) {
-            if (tick % 10 == 0) {
+        if (dist > k.attackReach * (t.inReach ? 1.25 : 1.0)) {
+            t.inReach = false;
+            if (tick % (k.scale >= 3.0 ? 30 : 10) == 0) {
+                // A giant re-plans its route less often, so it walks a line instead of wobbling.
                 // An unreachable player still yields a path to the closest point, so they pile up at the wall.
                 pf.moveTo(target, k.approachSpeed);
             }
@@ -639,6 +642,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 smash(t, target);
             }
         } else {
+            t.inReach = true; // stays put until the player gets clearly out of reach again
             pf.stopPathfinding();
             if (tick - t.lastAttack >= k.attackCooldown) {
                 t.lastAttack = tick;
