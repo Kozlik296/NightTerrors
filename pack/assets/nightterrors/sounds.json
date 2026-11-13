@@ -1,16 +1,16 @@
 {
-  "stalker": {
+  "breacher": {
     "sounds": [
       {
-        "name": "nightterrors:stalker",
+        "name": "nightterrors:breacher",
         "stream": false
       }
     ]
   },
-  "spider": {
+  "burrower": {
     "sounds": [
       {
-        "name": "nightterrors:spider",
+        "name": "nightterrors:burrower",
         "stream": false
       }
     ]
@@ -23,6 +23,38 @@
       }
     ]
   },
+  "dwarf": {
+    "sounds": [
+      {
+        "name": "nightterrors:dwarf",
+        "stream": false
+      }
+    ]
+  },
+  "erupt": {
+    "sounds": [
+      {
+        "name": "nightterrors:erupt",
+        "stream": false
+      }
+    ]
+  },
+  "mimic": {
+    "sounds": [
+      {
+        "name": "nightterrors:mimic",
+        "stream": false
+      }
+    ]
+  },
+  "mimic_reveal": {
+    "sounds": [
+      {
+        "name": "nightterrors:mimic_reveal",
+        "stream": false
+      }
+    ]
+  },
   "ripper": {
     "sounds": [
       {
@@ -31,10 +63,34 @@
       }
     ]
   },
-  "watcher": {
+  "scream": {
     "sounds": [
       {
-        "name": "nightterrors:watcher",
+        "name": "nightterrors:scream",
+        "stream": false
+      }
+    ]
+  },
+  "shrieker": {
+    "sounds": [
+      {
+        "name": "nightterrors:shrieker",
+        "stream": false
+      }
+    ]
+  },
+  "spider": {
+    "sounds": [
+      {
+        "name": "nightterrors:spider",
+        "stream": false
+      }
+    ]
+  },
+  "stalker": {
+    "sounds": [
+      {
+        "name": "nightterrors:stalker",
         "stream": false
       }
     ]
@@ -47,10 +103,10 @@
       }
     ]
   },
-  "scream": {
+  "watcher": {
     "sounds": [
       {
-        "name": "nightterrors:scream",
+        "name": "nightterrors:watcher",
         "stream": false
       }
     ]

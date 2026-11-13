@@ -15,15 +15,19 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Bukkit;
+import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.HeightMap;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.SoundCategory;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -66,6 +70,16 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         long lastLeap;
         long fleeUntil;
         boolean leapHit = true;
+        /** BURROWER: 0 = under ground, 1 = on the surface. MIMIC: 0 = disguised, 1 = revealed. */
+        int state;
+        long stateUntil;
+        long cooldownUntil;
+        Location hidden;
+        UUID huntId;
+        long huntUntil;
+        long awakeDay = -1;
+        double lastX;
+        double lastZ;
 
         Tracked(Mob mob, MobKind kind) {
             this.mob = mob;
@@ -85,6 +99,8 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     private byte[] packHash;
     private double viewCos;
     private long tick;
+    /** True while this plugin itself moves a mob, so its own teleport is not blocked. */
+    private boolean selfTeleport;
 
     @Override
     public void onEnable() {
@@ -155,20 +171,61 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             if (ThreadLocalRandom.current().nextDouble() * 100.0 >= k.chancePercent) {
                 continue;
             }
-            if (countAlive(k, w) >= k.maxAlive) {
+            if (countAlive(k) >= k.maxAlive) {
                 continue;
+            }
+            if (k.scale >= 2.0 && !hasRoom(loc, k.scale)) {
+                continue; // a giant under a tree or overhang would suffocate
             }
             e.setCancelled(true);
             Location at = loc.clone();
-            Bukkit.getScheduler().runTask(this, () -> spawn(k, at));
+            Bukkit.getScheduler().runTask(this, () -> spawnGroup(k, at));
             return;
         }
     }
 
-    private int countAlive(MobKind k, World w) {
+    /** Enough free air for a body of this scale (vanilla zombie proportions: 0.6 wide, 1.95 tall). */
+    private static boolean hasRoom(Location loc, double scale) {
+        World w = loc.getWorld();
+        int r = (int) Math.min(2, Math.ceil(0.3 * scale));
+        int h = (int) Math.ceil(1.95 * scale);
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                for (int dy = 0; dy <= h; dy++) {
+                    if (!w.getBlockAt(loc.getBlockX() + dx, loc.getBlockY() + dy, loc.getBlockZ() + dz).isPassable()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /** Spawns one mob, or a whole pack around the spot when group-size is above 1. */
+    private void spawnGroup(MobKind k, Location at) {
+        spawn(k, at);
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        World w = at.getWorld();
+        for (int i = 1; i < k.groupSize && w != null; i++) {
+            if (countAlive(k) >= k.maxAlive) {
+                return;
+            }
+            Location l = at.clone().add(rnd.nextDouble(-3, 3), 0, rnd.nextDouble(-3, 3));
+            int top = w.getHighestBlockYAt(l, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+            if (Math.abs(top - at.getY()) <= 4) {
+                l.setY(top);
+            }
+            if (l.getBlock().isPassable()) {
+                spawn(k, l);
+            }
+        }
+    }
+
+    /** Living mobs of this type in loaded chunks, across all worlds. */
+    private int countAlive(MobKind k) {
         int n = 0;
         for (Tracked t : tracked.values()) {
-            if (t.kind.id.equals(k.id) && t.mob.isValid() && t.mob.getWorld().equals(w)) {
+            if (t.kind.id.equals(k.id) && t.mob.isValid()) {
                 n++;
             }
         }
@@ -219,6 +276,13 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         setAttr(mob, Attribute.FOLLOW_RANGE, k.followRange);
         setAttr(mob, Attribute.SCALE, k.scale);
         mob.setSilent(k.silent);
+        if (k.scale >= 2.0) {
+            setAttr(mob, Attribute.STEP_HEIGHT, Math.min(3.0, 0.6 * k.scale));
+        }
+        if (k.persistent) {
+            mob.setPersistent(true);
+            mob.setRemoveWhenFarAway(false);
+        }
         Rig.Def rigDef = k.model == null ? null : rigs.get(k.model);
         if (rigDef != null) {
             // The vanilla body only does the walking and fighting; what players see is the rig.
@@ -232,10 +296,29 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             }
             t.rig = new Rig(rigDef, mob, k.modelYawOffset);
         }
-        if (k.behavior == MobKind.Behavior.STALKER || k.behavior == MobKind.Behavior.WATCHER) {
-            // These two are driven only by this plugin, not by the vanilla brain.
+        if (k.behavior == MobKind.Behavior.STALKER || k.behavior == MobKind.Behavior.WATCHER
+                || k.behavior == MobKind.Behavior.HUNTER || k.behavior == MobKind.Behavior.BURROWER) {
+            // These are driven only by this plugin, not by the vanilla brain.
             Bukkit.getMobGoals().removeAllGoals(mob);
             mob.setTarget(null);
+        }
+        if (k.behavior == MobKind.Behavior.MIMIC) {
+            // Starts as an ordinary animal: vanilla look, vanilla sounds, vanilla wandering.
+            mob.setSilent(false);
+            t.state = 0;
+        }
+        if (k.behavior == MobKind.Behavior.BURROWER) {
+            burrow(t, false);
+        }
+    }
+
+    /** Moves a tracked mob without tripping our own teleport block. */
+    private void tp(Mob mob, Location to) {
+        selfTeleport = true;
+        try {
+            mob.teleport(to);
+        } finally {
+            selfTeleport = false;
         }
     }
 
@@ -268,6 +351,9 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     @EventHandler
     public void onDeath(EntityDeathEvent e) {
         Tracked t = tracked.get(e.getEntity().getUniqueId());
+        if (t != null && t.kind.xp >= 0) {
+            e.setDroppedExp(t.kind.xp);
+        }
         if (t != null && t.rig != null) {
             // The invisible body would play its death animation for a second; hide the model in smoke instead.
             Location at = t.mob.getLocation().add(0, t.mob.getHeight() / 2.0, 0);
@@ -328,19 +414,37 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 untrack(mob.getUniqueId());
                 continue;
             }
-            if (despawnAtDay && t.kind.onlyAtNight && mob.getWorld().isDayTime()) {
-                vanish(mob);
+            if (despawnAtDay && t.kind.onlyAtNight && !t.kind.persistent && mob.getWorld().isDayTime()) {
+                if (t.kind.behavior == MobKind.Behavior.MIMIC && t.state == 0) {
+                    untrack(mob.getUniqueId()); // still looks like an animal: just gone, no smoke
+                    mob.remove();
+                } else {
+                    vanish(mob);
+                }
                 continue;
             }
+            boolean asleep = t.kind.sleepsByDay && asleep(t);
             switch (t.kind.behavior) {
                 case STALKER -> stalker(t);
                 case GROWER -> grower(t);
                 case LEAPER -> leaper(t);
                 case WATCHER -> watcher(t);
+                case HUNTER -> {
+                    if (asleep) {
+                        mob.getPathfinder().stopPathfinding();
+                    } else {
+                        hunter(t);
+                    }
+                }
+                case BURROWER -> burrower(t);
+                case MIMIC -> mimic(t);
                 default -> { }
             }
             if (mob.isValid()) {
-                sound(t);
+                boolean quiet = asleep || (t.kind.behavior == MobKind.Behavior.MIMIC && t.state == 0);
+                if (!quiet) {
+                    sound(t);
+                }
                 if (t.rig != null) {
                     float factor = 1f;
                     if (t.kind.behavior == MobKind.Behavior.GROWER && t.kind.scale > 0) {
@@ -349,7 +453,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                             factor = (float) sc.getBaseValue();
                         }
                     }
-                    t.rig.update(mob, lookPoint(mob), factor);
+                    t.rig.update(mob, asleep ? null : lookPoint(mob), factor, asleep);
                 }
             }
         }
@@ -385,6 +489,17 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             return;
         }
         Tracked hit = tracked.get(e.getEntity().getUniqueId());
+        if (hit != null) {
+            hit.awakeDay = hit.mob.getWorld().getFullTime() / 24000L; // hitting a sleeper wakes it
+            if (hit.kind.behavior == MobKind.Behavior.MIMIC && hit.state == 0) {
+                Tracked m = hit;
+                Bukkit.getScheduler().runTask(this, () -> {
+                    if (m.mob.isValid() && m.state == 0) {
+                        reveal(m);
+                    }
+                });
+            }
+        }
         if (hit != null && hit.rig != null && e.getFinalDamage() > 0) {
             // The real body is invisible and silent, so show and play the hit ourselves.
             Location at = hit.mob.getLocation().add(0, hit.mob.getHeight() * 0.6, 0);
@@ -418,18 +533,24 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onTeleport(EntityTeleportEvent e) {
         // Stops the enderman body from blinking away when wet or hit.
-        if (tracked.containsKey(e.getEntity().getUniqueId())) {
+        if (!selfTeleport && tracked.containsKey(e.getEntity().getUniqueId())) {
             e.setCancelled(true);
         }
     }
 
     private void sound(Tracked t) {
         MobKind k = t.kind;
+        Location at = t.mob.getLocation();
+        double moved = Math.hypot(at.getX() - t.lastX, at.getZ() - t.lastZ);
+        t.lastX = at.getX();
+        t.lastZ = at.getZ();
         if (k.soundKey == null || k.soundKey.isEmpty() || tick - t.lastSound < k.soundInterval) {
             return;
         }
+        if (k.soundOnlyMoving && moved < 0.02) {
+            return; // footsteps only while walking
+        }
         t.lastSound = tick;
-        Location at = t.mob.getLocation();
         double r2 = k.soundRadius * k.soundRadius;
         for (Player p : t.mob.getWorld().getPlayers()) {
             double d2 = p.getLocation().distanceSquared(at);
@@ -440,6 +561,269 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             float volume = (float) (k.soundVolume * (0.35 + 0.65 * closeness));
             // Played at the listener so the volume follows the distance we computed.
             p.playSound(p.getLocation(), k.soundKey, SoundCategory.HOSTILE, volume, k.soundPitch);
+        }
+    }
+
+    // ------------------------------------------------------------------ hunter (breacher, dwarves, shrieker, revealed mimic)
+
+    /** Sleeps through the day until a player comes close or hits it; then stays awake for that day. */
+    private boolean asleep(Tracked t) {
+        World w = t.mob.getWorld();
+        if (!w.isDayTime()) {
+            return false;
+        }
+        long day = w.getFullTime() / 24000L;
+        if (t.awakeDay == day) {
+            return false;
+        }
+        if (nearestPlayer(t.mob, t.kind.wakeRange) != null) {
+            t.awakeDay = day;
+            return false;
+        }
+        return true;
+    }
+
+    /** Nearest player in range. Without through-walls the mob must see them, but keeps chasing for 5 s after losing sight. */
+    private Player huntTarget(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        Player best = null;
+        double bestD2 = k.range * k.range;
+        Location at = mob.getLocation();
+        for (Player p : mob.getWorld().getPlayers()) {
+            if (!counts(p) || p.getGameMode() == GameMode.CREATIVE) {
+                continue;
+            }
+            double d2 = p.getLocation().distanceSquared(at);
+            if (d2 > bestD2) {
+                continue;
+            }
+            boolean remembered = p.getUniqueId().equals(t.huntId) && tick < t.huntUntil;
+            if (!k.throughWalls && !remembered && !mob.hasLineOfSight(p)) {
+                continue;
+            }
+            bestD2 = d2;
+            best = p;
+        }
+        if (best != null && (k.throughWalls || mob.hasLineOfSight(best))) {
+            t.huntId = best.getUniqueId();
+            t.huntUntil = tick + 100;
+        }
+        return best;
+    }
+
+    private void hunter(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        Pathfinder pf = mob.getPathfinder();
+        Player target = huntTarget(t);
+        if (target == null) {
+            pf.stopPathfinding();
+            return;
+        }
+        mob.lookAt(target);
+        double dist = mob.getLocation().distance(target.getLocation());
+        if (dist > k.attackReach) {
+            if (tick % 10 == 0) {
+                // An unreachable player still yields a path to the closest point, so they pile up at the wall.
+                pf.moveTo(target, k.approachSpeed);
+            }
+            if (k.breaksBlocks && tick % 20 == 0) {
+                smash(t, target);
+            }
+        } else {
+            pf.stopPathfinding();
+            if (tick - t.lastAttack >= k.attackCooldown) {
+                t.lastAttack = tick;
+                mob.swingMainHand();
+                target.damage(k.damage, mob);
+            }
+        }
+    }
+
+    private static boolean breakable(MobKind k, Material m) {
+        if (m.isAir()) {
+            return false;
+        }
+        return Tag.LOGS.isTagged(m) || Tag.PLANKS.isTagged(m) || Tag.WOODEN_DOORS.isTagged(m)
+                || Tag.WOODEN_FENCES.isTagged(m) || Tag.FENCE_GATES.isTagged(m) || Tag.WOODEN_TRAPDOORS.isTagged(m)
+                || Tag.WOODEN_SLABS.isTagged(m) || Tag.WOODEN_STAIRS.isTagged(m) || Tag.LEAVES.isTagged(m)
+                || Tag.WOOL.isTagged(m) || m.name().contains("GLASS") || k.extraBreakable.contains(m.name());
+    }
+
+    /** Breaks weak blocks (wood, leaves, wool, glass) standing between the mob and its target. Stone holds. */
+    private void smash(Tracked t, Player target) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        Location base = mob.getLocation();
+        Vector dir = target.getLocation().toVector().subtract(base.toVector()).setY(0);
+        if (dir.lengthSquared() < 0.01) {
+            return;
+        }
+        dir.normalize();
+        Vector side = new Vector(-dir.getZ(), 0, dir.getX());
+        double half = Math.max(0.5, 0.3 * k.scale);
+        int height = (int) Math.ceil(1.95 * k.scale);
+        World w = mob.getWorld();
+        int broken = 0;
+        for (double f = half; f <= half + 2.0 && broken < 8; f += 1.0) {
+            for (double sd = -half; sd <= half && broken < 8; sd += 1.0) {
+                for (int y = 0; y <= height && broken < 8; y++) {
+                    Block b = w.getBlockAt(
+                            (int) Math.floor(base.getX() + dir.getX() * f + side.getX() * sd),
+                            base.getBlockY() + y,
+                            (int) Math.floor(base.getZ() + dir.getZ() * f + side.getZ() * sd));
+                    if (breakable(k, b.getType())) {
+                        w.playEffect(b.getLocation(), Effect.STEP_SOUND, b.getType());
+                        b.breakNaturally();
+                        broken++;
+                    }
+                }
+            }
+        }
+        if (broken > 0) {
+            mob.swingMainHand();
+        }
+    }
+
+    // ------------------------------------------------------------------ burrower
+
+    /** Goes under the ground below its feet. With effects when it digs in during play. */
+    private void burrow(Tracked t, boolean effects) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        Location loc = mob.getLocation();
+        World w = mob.getWorld();
+        Block ground = null;
+        for (int i = 0; i < 6; i++) {
+            Block b = w.getBlockAt(loc.getBlockX(), loc.getBlockY() - i, loc.getBlockZ());
+            if (b.getType().isSolid()) {
+                ground = b;
+                break;
+            }
+        }
+        if (ground == null) {
+            vanish(mob);
+            return;
+        }
+        if (effects) {
+            Location top = ground.getLocation().add(0.5, 1.0, 0.5);
+            w.spawnParticle(Particle.BLOCK, top, 60, 0.5, 0.2, 0.5, ground.getBlockData());
+            if (!k.eruptSound.isEmpty()) {
+                w.playSound(top, k.eruptSound, SoundCategory.HOSTILE, 1.0f, 0.6f);
+            }
+        }
+        t.hidden = new Location(w, loc.getX(), ground.getY() + 1 - k.depth, loc.getZ(), loc.getYaw(), 0f);
+        t.state = 0;
+        t.cooldownUntil = tick + k.cooldownTicks;
+        mob.getPathfinder().stopPathfinding();
+        mob.setAI(false);
+        mob.setInvulnerable(true);
+        mob.setGravity(false);
+        mob.setCollidable(false);
+        mob.setVelocity(new Vector(0, 0, 0));
+        tp(mob, t.hidden);
+    }
+
+    private void burrower(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        if (t.state == 1) {
+            hunter(t);
+            if (tick >= t.stateUntil && mob.isValid()) {
+                burrow(t, true);
+            }
+            return;
+        }
+        if (t.hidden == null) {
+            burrow(t, false);
+            return;
+        }
+        if (mob.getLocation().distanceSquared(t.hidden) > 0.05) {
+            tp(mob, t.hidden);
+        }
+        if (tick < t.cooldownUntil) {
+            return;
+        }
+        double surfaceY = t.hidden.getY() + k.depth;
+        Player victim = null;
+        for (Player p : mob.getWorld().getPlayers()) {
+            if (!counts(p)) {
+                continue;
+            }
+            Location pl = p.getLocation();
+            double flat = Math.hypot(pl.getX() - t.hidden.getX(), pl.getZ() - t.hidden.getZ());
+            double dy = pl.getY() - surfaceY;
+            if (flat <= k.triggerRange && dy > -2 && dy < 4) {
+                victim = p;
+                break;
+            }
+        }
+        if (victim == null) {
+            return;
+        }
+        // Erupt.
+        World w = mob.getWorld();
+        Location surface = new Location(w, t.hidden.getX(), surfaceY, t.hidden.getZ(), t.hidden.getYaw(), 0f);
+        Block ground = surface.clone().add(0, -0.5, 0).getBlock();
+        mob.setAI(true);
+        mob.setInvulnerable(false);
+        mob.setGravity(true);
+        mob.setCollidable(true);
+        tp(mob, surface);
+        t.state = 1;
+        t.stateUntil = tick + k.activeTicks;
+        if (ground.getType().isSolid()) {
+            w.spawnParticle(Particle.BLOCK, surface, 120, 0.8, 0.6, 0.8, ground.getBlockData());
+        }
+        if (!k.eruptSound.isEmpty()) {
+            w.playSound(surface, k.eruptSound, SoundCategory.HOSTILE, 1.5f, 1.0f);
+        }
+        for (Player p : w.getPlayers()) {
+            if (counts(p) && p.getLocation().distanceSquared(surface) <= (k.triggerRange + 0.5) * (k.triggerRange + 0.5)) {
+                if (p.getGameMode() != GameMode.CREATIVE) {
+                    p.damage(k.damage, mob);
+                }
+                Vector v = p.getVelocity();
+                p.setVelocity(new Vector(v.getX(), k.launch, v.getZ()));
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ mimic
+
+    /** The animal drops the act: body hidden, monster model on, hunting. */
+    private void reveal(Tracked t) {
+        Mob mob = t.mob;
+        MobKind k = t.kind;
+        t.state = 1;
+        Bukkit.getMobGoals().removeAllGoals(mob);
+        mob.setTarget(null);
+        mob.setSilent(true);
+        Rig.Def def = rigs.get(k.revealModel);
+        if (def != null) {
+            mob.setInvisible(true);
+            if (t.rig != null) {
+                t.rig.remove();
+            }
+            t.rig = new Rig(def, mob, k.modelYawOffset);
+        }
+        Location at = mob.getLocation().add(0, mob.getHeight() / 2.0, 0);
+        mob.getWorld().spawnParticle(Particle.LARGE_SMOKE, at, 25, 0.4, 0.5, 0.4, 0.02);
+        if (!k.eruptSound.isEmpty()) {
+            mob.getWorld().playSound(at, k.eruptSound, SoundCategory.HOSTILE, 1.5f, 1.0f);
+        }
+        t.huntUntil = 0;
+    }
+
+    private void mimic(Tracked t) {
+        if (t.state == 1) {
+            hunter(t);
+            return;
+        }
+        Player near = nearestPlayer(t.mob, t.kind.triggerRange);
+        if (near != null && near.getGameMode() != GameMode.CREATIVE) {
+            reveal(t);
         }
     }
 

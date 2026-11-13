@@ -109,7 +109,10 @@ final class Rig {
      * Moves and poses all parts. {@code look} is the point the head should face, or null.
      * {@code factor} enlarges the whole body (1 = designed size); used by the growing spider.
      */
-    void update(Mob mob, Location look, float factor) {
+    void update(Mob mob, Location look, float factor, boolean asleep) {
+        if (asleep) {
+            look = null;
+        }
         Location loc = mob.getLocation();
         double dx = loc.getX() - lastX;
         double dz = loc.getZ() - lastZ;
@@ -146,6 +149,9 @@ final class Rig {
             if (p.baseYaw() != 0f) {
                 q.rotateY(p.baseYaw()); // fans the legs out around the body
             }
+            if (p.look() && asleep) {
+                q.rotateX((float) Math.toRadians(35)); // head bowed
+            }
             if (p.look() && look != null) {
                 relYaw = clamp(wrap(yawTo(loc, look) - yaw), -70f, 70f);
                 double up = look.getY() - (loc.getY() + p.py() * factor);
@@ -155,7 +161,7 @@ final class Rig {
                 q.rotateY((float) -Math.toRadians(relYaw)).rotateX((float) Math.toRadians(pitch));
             }
             float a = (float) (p.swing() * Math.sin(phase + p.offset()) * amp
-                    + p.idle() * Math.sin(time * 0.12 + p.offset()));
+                    + (asleep ? 0.0 : p.idle() * Math.sin(time * 0.12 + p.offset())));
             if (a != 0f) {
                 switch (p.axis()) {
                     case 'y' -> q.rotateY(a);
@@ -167,7 +173,7 @@ final class Rig {
             d.setInterpolationDelay(0);
             d.setInterpolationDuration(3);
             d.setTransformation(new Transformation(new Vector3f(p.px() * factor, p.py() * factor + bob, p.pz() * factor), q,
-                    new Vector3f(s, s, s), new Quaternionf()));
+                    asleep && p.glow() ? new Vector3f(0.001f, 0.001f, 0.001f) : new Vector3f(s, s, s), new Quaternionf()));
         }
     }
 

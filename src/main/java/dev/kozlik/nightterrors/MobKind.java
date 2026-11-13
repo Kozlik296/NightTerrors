@@ -11,7 +11,7 @@ import org.bukkit.entity.EntityType;
 /** One custom mob definition, read from config.yml. */
 final class MobKind {
 
-    enum Behavior { STALKER, GROWER, LEAPER, WATCHER, NONE }
+    enum Behavior { STALKER, GROWER, LEAPER, WATCHER, HUNTER, BURROWER, MIMIC, NONE }
 
     final String id;
     boolean enabled;
@@ -32,6 +32,12 @@ final class MobKind {
     double knockback;
     String model;
     float modelYawOffset;
+    boolean persistent;
+    boolean sleepsByDay;
+    double wakeRange;
+    int groupSize;
+    int xp;
+    boolean soundOnlyMoving;
 
     String soundKey;
     double soundRadius;
@@ -65,6 +71,20 @@ final class MobKind {
     double effectRange;
     String stareSound;
     String stareScream;
+    // HUNTER
+    boolean throughWalls;
+    int attackCooldown;
+    boolean breaksBlocks;
+    final Set<String> extraBreakable = new HashSet<>();
+    // BURROWER
+    double triggerRange;
+    int activeTicks;
+    int cooldownTicks;
+    double depth;
+    double launch;
+    String eruptSound;
+    // MIMIC
+    String revealModel;
 
     private MobKind(String id) {
         this.id = id;
@@ -103,6 +123,13 @@ final class MobKind {
         k.model = s.getString("model", "");
         k.modelYawOffset = (float) s.getDouble("model-yaw-offset", 0);
 
+        k.persistent = s.getBoolean("persistent", false);
+        k.sleepsByDay = s.getBoolean("sleeps-by-day", false);
+        k.wakeRange = s.getDouble("wake-range", 14);
+        k.groupSize = Math.max(1, s.getInt("group-size", 1));
+        k.xp = s.getInt("xp", -1);
+        k.soundOnlyMoving = s.getBoolean("sound.only-moving", false);
+
         k.soundKey = s.getString("sound.key", "");
         k.soundRadius = s.getDouble("sound.radius", 16);
         k.soundInterval = Math.max(2, s.getInt("sound.interval-ticks", 60));
@@ -136,6 +163,19 @@ final class MobKind {
         k.stareScream = s.getString("behavior.stare-scream", "nightterrors:scream");
         k.vanishDistance = s.getDouble("behavior.vanish-distance", 7);
         k.stareSeconds = s.getDouble("behavior.stare-seconds", 10);
+        k.throughWalls = s.getBoolean("behavior.through-walls", false);
+        k.attackCooldown = Math.max(2, s.getInt("behavior.attack-cooldown-ticks", 20));
+        k.breaksBlocks = s.getBoolean("behavior.breaks-blocks", false);
+        for (String name : s.getStringList("behavior.extra-breakable")) {
+            k.extraBreakable.add(name.trim().toUpperCase(Locale.ROOT));
+        }
+        k.triggerRange = s.getDouble("behavior.trigger-range", 3.2);
+        k.activeTicks = (int) (s.getDouble("behavior.active-seconds", 7) * 20);
+        k.cooldownTicks = (int) (s.getDouble("behavior.cooldown-seconds", 12) * 20);
+        k.depth = s.getDouble("behavior.depth", 2.4);
+        k.launch = s.getDouble("behavior.launch", 0.75);
+        k.eruptSound = s.getString("behavior.erupt-sound", "");
+        k.revealModel = s.getString("behavior.reveal-model", "");
         return k;
     }
 

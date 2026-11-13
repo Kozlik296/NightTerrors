@@ -1,4 +1,4 @@
-# NightTerrors 1.4 - strasidelni mobove, kteri nahrazuji prirozene spawny.
+# NightTerrors 1.5 - strasidelni mobove, kteri nahrazuji prirozene spawny.
 # Po zmene: /nt reload
 #
 # U kazdeho moba:
@@ -8,14 +8,18 @@
 #   worlds          seznam svetu, [] = vsechny
 #   only-at-night   spawn jen v noci
 #   surface-only    spawn jen pod otevrenym nebem (ne v jeskynich)
-#   max-alive       kolik jich muze zit najednou v jednom svete
 #   speed           vanilla atribut rychlosti (zombie ma 0.23)
 #   scale           velikost (1.0 = normalni)
 #   knockback       jak daleko odhodi hrace pri zasahu (0 = jen vanilla)
 #   model           vlastni vzhled z resource packu (stalker, watcher, ripper, crawler, spider); prazdne = vanilla telo
 #   model-yaw-offset  kdyby model koukal dozadu, dej 180
 #   sound.key       libovolny zvuk hry nebo resource packu
-#   behavior.type   STALKER | GROWER | LEAPER | WATCHER | NONE
+#   xp              kolik XP z nej padne (-1 = jako vanilla telo)
+#   group-size      kolik se jich spawne najednou (smecka)
+#   persistent      true = nezmizi za usvitu ani kdyz odejdes
+#   sleeps-by-day   true = pres den spi, dokud se hrac nepriblizi na wake-range nebo ho neuderi
+#   behavior.type   STALKER | GROWER | LEAPER | WATCHER | HUNTER | BURROWER | MIMIC | NONE
+#   max-alive       pocita se pro cely server (jen nactene chunky)
 
 settings:
   despawn-at-day: true     # za usvitu zmizi v koure
@@ -26,7 +30,7 @@ settings:
 resource-pack:
   enabled: true
   url: "https://raw.githubusercontent.com/Kozlik296/NightTerrors/main/pack/NightTerrors-pack.zip"
-  sha1: "f3251d7a32effb12874e9c5475ad00b48fbda04b"
+  sha1: "092aa2c0ed040b1052a239c0c3c44a21bb4a18cb"
 
 mobs:
   stalker:
@@ -38,6 +42,7 @@ mobs:
     only-at-night: true
     surface-only: true
     max-alive: 3
+    xp: 60
     health: 40
     damage: 9
     speed: 0.3
@@ -70,6 +75,7 @@ mobs:
     only-at-night: true
     surface-only: true
     max-alive: 2
+    xp: 60
     health: 50
     damage: 7
     speed: 0.3
@@ -101,6 +107,7 @@ mobs:
     only-at-night: true
     surface-only: false
     max-alive: 4
+    xp: 60
     health: 24
     damage: 8
     speed: 0.46
@@ -128,12 +135,13 @@ mobs:
   ripper:
     enabled: true
     entity: ZOGLIN
-    replaces: [CREEPER]
+    replaces: [SPIDER]
     chance-percent: 1.0
     worlds: []
     only-at-night: true
     surface-only: true
     max-alive: 2
+    xp: 60
     health: 90
     damage: 15
     speed: 0.42
@@ -162,6 +170,7 @@ mobs:
     only-at-night: true
     surface-only: true
     max-alive: 3
+    xp: 60
     health: 40
     damage: 1
     speed: 0.3
@@ -186,3 +195,184 @@ mobs:
       stare-damage: 6      # poskozeni pri maximu (6 = 3 srdce)
       stare-sound: "nightterrors:static"
       stare-scream: "nightterrors:scream"
+
+  breacher:
+    enabled: true
+    entity: HUSK
+    replaces: [ZOMBIE]
+    chance-percent: 0.3
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 10
+    persistent: true       # nezmizi; hromadi se u hradeb
+    sleeps-by-day: true    # pres den stoji se sklonenou hlavou a zhasnutyma ocima
+    wake-range: 14         # hrac bliz nez tohle (nebo rana) ho na ten den probudi
+    xp: 500
+    health: 400
+    damage: 20
+    speed: 0.2
+    scale: 5.0
+    follow-range: 64
+    knockback: 3.0
+    silent: true
+    clear-equipment: true
+    model: "breacher"
+    model-yaw-offset: 0
+    sound:
+      key: "nightterrors:breacher"
+      radius: 70
+      interval-ticks: 26
+      volume: 1.0
+      pitch: 1.0
+      only-moving: true    # dupot jen kdyz jde
+    behavior:
+      type: HUNTER
+      range: 50            # na tuhle dalku te citi
+      through-walls: true  # i pres zdi
+      approach-speed: 1.0
+      attack-reach: 5.0
+      attack-cooldown-ticks: 30
+      breaks-blocks: true  # rozbiji drevo, prkna, ploty, dvere, listi, vlnu a sklo; kamen ne
+      extra-breakable: []  # dalsi bloky, napr. [DIRT, COBBLESTONE]
+
+  dwarf:
+    enabled: true
+    entity: HUSK
+    replaces: [ZOMBIE]
+    chance-percent: 0.7
+    worlds: []
+    only-at-night: true
+    surface-only: false
+    max-alive: 21
+    group-size: 7
+    xp: 12
+    health: 8
+    damage: 3
+    speed: 0.36
+    scale: 0.58
+    follow-range: 48
+    silent: true
+    clear-equipment: true
+    model: "dwarf"
+    model-yaw-offset: 0
+    sound:
+      key: "nightterrors:dwarf"
+      radius: 18
+      interval-ticks: 45
+      volume: 0.7
+      pitch: 1.0
+    behavior:
+      type: HUNTER
+      range: 40
+      through-walls: false
+      approach-speed: 1.0
+      attack-reach: 1.4
+      attack-cooldown-ticks: 16
+
+  shrieker:
+    enabled: true
+    entity: HUSK
+    replaces: [SKELETON]
+    chance-percent: 0.8
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 2
+    xp: 80
+    health: 22
+    damage: 5
+    speed: 0.5
+    scale: 1.0
+    follow-range: 80
+    silent: true
+    clear-equipment: true
+    model: "shrieker"
+    model-yaw-offset: 0
+    sound:
+      key: "nightterrors:shrieker"
+      radius: 70
+      interval-ticks: 110
+      volume: 1.0
+      pitch: 1.0
+    behavior:
+      type: HUNTER
+      range: 64            # uvidi te z dalky (potrebuje primy vyhled)
+      through-walls: false
+      approach-speed: 1.3  # kdyby sel utect, zvys tohle nebo speed
+      attack-reach: 1.9
+      attack-cooldown-ticks: 14
+
+  burrower:
+    enabled: true
+    entity: PIG
+    replaces: [ZOMBIE]
+    chance-percent: 0.8
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 4
+    xp: 60
+    health: 30
+    damage: 6
+    speed: 0.3
+    scale: 1.3
+    follow-range: 32
+    silent: true
+    clear-equipment: false
+    model: "burrower"
+    model-yaw-offset: 0
+    sound:
+      key: "nightterrors:burrower"
+      radius: 10
+      interval-ticks: 60
+      volume: 0.6
+      pitch: 1.0
+    behavior:
+      type: BURROWER
+      trigger-range: 3.2   # kdyz projdes takhle blizko, vyrazi ze zeme
+      depth: 2.6           # jak hluboko pod povrchem ceka
+      launch: 0.75         # jak moc te vyhodi do vzduchu
+      active-seconds: 7    # jak dlouho utoci, nez se zase zahrabe
+      cooldown-seconds: 12
+      erupt-sound: "nightterrors:erupt"
+      range: 20
+      approach-speed: 1.3
+      attack-reach: 2.0
+      attack-cooldown-ticks: 18
+
+  mimic:
+    enabled: true
+    entity: COW            # dokud se neodhali, je to obycejna krava (jde dat i PIG nebo SHEEP)
+    replaces: [ZOMBIE]
+    chance-percent: 0.5
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 3
+    xp: 70
+    health: 40
+    damage: 8
+    speed: 0.2
+    scale: 1.0
+    follow-range: 32
+    knockback: 1.0
+    silent: true
+    clear-equipment: false
+    model: ""              # zadny model, dokud se neodhali
+    model-yaw-offset: 0
+    sound:
+      key: "nightterrors:mimic"
+      radius: 14
+      interval-ticks: 60
+      volume: 1.0
+      pitch: 1.0
+    behavior:
+      type: MIMIC
+      trigger-range: 3.5   # kdyz projdes takhle blizko (nebo ho uderis), postavi se na zadni
+      reveal-model: "mimic"
+      erupt-sound: "nightterrors:mimic_reveal"
+      range: 24
+      approach-speed: 1.9
+      attack-reach: 2.2
+      attack-cooldown-ticks: 18
