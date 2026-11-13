@@ -39,6 +39,14 @@
       }
     ]
   },
+  "grab": {
+    "sounds": [
+      {
+        "name": "nightterrors:grab",
+        "stream": false
+      }
+    ]
+  },
   "mimic": {
     "sounds": [
       {
@@ -75,6 +83,14 @@
     "sounds": [
       {
         "name": "nightterrors:shrieker",
+        "stream": false
+      }
+    ]
+  },
+  "snatcher": {
+    "sounds": [
+      {
+        "name": "nightterrors:snatcher",
         "stream": false
       }
     ]

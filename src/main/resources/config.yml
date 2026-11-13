@@ -1,4 +1,4 @@
-# NightTerrors 1.5 - strasidelni mobove, kteri nahrazuji prirozene spawny.
+# NightTerrors 1.6 - strasidelni mobove, kteri nahrazuji prirozene spawny.
 # Po zmene: /nt reload
 #
 # U kazdeho moba:
@@ -31,13 +31,14 @@ settings:
     - "&7Obr bez kuze rozbiji &fdrevo, prkna, ploty, dvere, branky, listi, vlnu a sklo&7."
     - "&7Kamen a tvrdsi bloky nezbori. &fStav hradby a dum z kamene&7, jinak ti je znici."
     - "&7Pres den spi, dokud k nemu neprijdes. Citi te i pres zdi."
+    - "&7Mensi tlusty obr (Climber) nic nebori, ale &fvyleze po kolme zdi&7. Na slunci shori."
 
 # Zvuky pluginu jsou v malem resource packu, ktery se hraci nabidne pri pripojeni.
 # Kdo ho odmitne, vlastni zvuky neuslysi.
 resource-pack:
   enabled: true
   url: "https://raw.githubusercontent.com/Kozlik296/NightTerrors/main/pack/NightTerrors-pack.zip"
-  sha1: "c2afc9a5289a5a91fe149e968f2525f70ef71121"
+  sha1: "2ff5896afb8ab4452ef63146f552c4d919e23b4c"
 
 mobs:
   stalker:
@@ -213,7 +214,7 @@ mobs:
     worlds: []
     only-at-night: true
     surface-only: true
-    max-alive: 10
+    max-alive: 15
     persistent: true       # nezmizi; hromadi se u hradeb
     sleeps-by-day: true    # pres den stoji se sklonenou hlavou a zhasnutyma ocima
     wake-range: 14         # hrac bliz nez tohle (nebo rana) ho na ten den probudi
@@ -221,14 +222,15 @@ mobs:
     steam: true            # z tela stoupa para
     health: 400
     damage: 20
-    speed: 0.27
-    scale: 5.0
+    speed: 0.3
+    scale: 6.5
     follow-range: 64
     knockback: 3.0
     silent: true
     clear-equipment: true
     model: "breacher"
     model-yaw-offset: 0
+    model-scale: 1.3       # velikost modelu; drz v pomeru se scale (5.0 = 1.0, 6.5 = 1.3)
     sound:
       key: "nightterrors:breacher"
       radius: 70
@@ -241,7 +243,7 @@ mobs:
       range: 50            # na tuhle dalku te citi
       through-walls: true  # i pres zdi
       approach-speed: 1.0
-      attack-reach: 5.0
+      attack-reach: 6.0
       attack-cooldown-ticks: 30
       breaks-blocks: true  # rozbiji drevo, prkna, ploty, dvere, listi, vlnu a sklo; kamen ne
       extra-breakable: []  # dalsi bloky, napr. [DIRT, COBBLESTONE]
@@ -346,7 +348,8 @@ mobs:
       active-seconds: 15   # jak dlouho utoci, nez se zase zahrabe
       cooldown-seconds: 4
       erupt-sound: "nightterrors:erupt"
-      range: 20
+      range: 24            # na tuhle dalku te pod zemi vycitit
+      tunnel-speed: 0.7    # bloku za tick pod zemi (sprint hrace je asi 0.28)
       approach-speed: 1.3
       attack-reach: 2.0
       attack-cooldown-ticks: 18
@@ -387,3 +390,77 @@ mobs:
       approach-speed: 1.5
       attack-reach: 2.2
       attack-cooldown-ticks: 18
+
+  climber:
+    enabled: true
+    entity: HUSK
+    replaces: [ZOMBIE]
+    chance-percent: 1.0
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 6
+    dies-in-daylight: true # na slunci pod otevrenym nebem shori (ve stinu a v jeskyni prezije)
+    steam: true
+    xp: 150
+    health: 120
+    damage: 10
+    speed: 0.36
+    scale: 2.5
+    follow-range: 48
+    knockback: 1.5
+    silent: true
+    clear-equipment: true
+    model: "climber"
+    model-yaw-offset: 0
+    model-scale: 0.5
+    sound:
+      key: "nightterrors:breacher"
+      radius: 40
+      interval-ticks: 16
+      volume: 0.7
+      pitch: 1.5
+      only-moving: true
+    behavior:
+      type: HUNTER
+      range: 40
+      through-walls: true
+      approach-speed: 1.0
+      attack-reach: 3.0
+      attack-cooldown-ticks: 24
+      breaks-blocks: false
+      climbs: true         # vyleze po kolme zdi
+
+  snatcher:
+    enabled: true
+    entity: HUSK
+    replaces: [SKELETON]
+    chance-percent: 0.6
+    worlds: []
+    only-at-night: true
+    surface-only: true
+    max-alive: 2
+    xp: 90
+    health: 24
+    damage: 2              # za kazdou sekundu, co te nese
+    speed: 0.3
+    scale: 1.2
+    follow-range: 64
+    silent: true
+    clear-equipment: true
+    model: "snatcher"
+    model-yaw-offset: 0
+    sound:
+      key: "nightterrors:snatcher"
+      radius: 30
+      interval-ticks: 32
+      volume: 1.0
+      pitch: 1.0
+    behavior:
+      type: FLYER
+      range: 56
+      through-walls: false
+      fly-speed: 0.8       # bloku za tick pri naletu (sprint hrace je asi 0.28)
+      lift-level: 1        # sila levitace, kdyz te nese (0 = nejpomaleji)
+      lift-height: 40      # v teto vysce nad mistem chyceni te pusti
+      erupt-sound: "nightterrors:grab"

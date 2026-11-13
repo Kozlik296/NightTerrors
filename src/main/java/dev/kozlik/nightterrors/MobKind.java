@@ -11,7 +11,7 @@ import org.bukkit.entity.EntityType;
 /** One custom mob definition, read from config.yml. */
 final class MobKind {
 
-    enum Behavior { STALKER, GROWER, LEAPER, WATCHER, HUNTER, BURROWER, MIMIC, NONE }
+    enum Behavior { STALKER, GROWER, LEAPER, WATCHER, HUNTER, BURROWER, MIMIC, FLYER, NONE }
 
     final String id;
     boolean enabled;
@@ -40,6 +40,8 @@ final class MobKind {
     boolean soundOnlyMoving;
     double dodgeChance;
     boolean steam;
+    double modelScale;
+    boolean diesInDaylight;
 
     String soundKey;
     double soundRadius;
@@ -85,8 +87,14 @@ final class MobKind {
     double depth;
     double launch;
     String eruptSound;
+    double tunnelSpeed;
     // MIMIC
     String revealModel;
+    boolean climbs;
+    // FLYER
+    double flySpeed;
+    int liftLevel;
+    double liftHeight;
 
     private MobKind(String id) {
         this.id = id;
@@ -132,6 +140,8 @@ final class MobKind {
         k.xp = s.getInt("xp", -1);
         k.dodgeChance = s.getDouble("dodge-projectiles", 0.0);
         k.steam = s.getBoolean("steam", false);
+        k.modelScale = s.getDouble("model-scale", 1.0);
+        k.diesInDaylight = s.getBoolean("dies-in-daylight", false);
         k.soundOnlyMoving = s.getBoolean("sound.only-moving", false);
 
         k.soundKey = s.getString("sound.key", "");
@@ -180,6 +190,11 @@ final class MobKind {
         k.launch = s.getDouble("behavior.launch", 0.75);
         k.eruptSound = s.getString("behavior.erupt-sound", "");
         k.revealModel = s.getString("behavior.reveal-model", "");
+        k.tunnelSpeed = s.getDouble("behavior.tunnel-speed", 0.0);
+        k.climbs = s.getBoolean("behavior.climbs", false);
+        k.flySpeed = s.getDouble("behavior.fly-speed", 0.8);
+        k.liftLevel = Math.max(0, s.getInt("behavior.lift-level", 1));
+        k.liftHeight = s.getDouble("behavior.lift-height", 40);
         return k;
     }
 

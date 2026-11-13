@@ -15,6 +15,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.015,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -30,6 +31,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -45,6 +47,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -60,6 +63,7 @@
     "swing": 0.65,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -75,6 +79,7 @@
     "swing": -0.65,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -90,6 +95,7 @@
     "swing": -0.45,
     "offset": 0.0,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -105,6 +111,7 @@
     "swing": 0.45,
     "offset": 1.5,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -127,6 +134,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.012,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -142,6 +150,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -157,6 +166,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -172,6 +182,7 @@
     "swing": 0.6,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -187,6 +198,7 @@
     "swing": -0.6,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -202,6 +214,7 @@
     "swing": -0.4,
     "offset": 0.0,
     "idle": 0.07,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -217,6 +230,7 @@
     "swing": 0.4,
     "offset": 2.0,
     "idle": 0.07,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -239,6 +253,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -254,6 +269,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": true
@@ -269,6 +285,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -284,6 +301,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -299,6 +317,7 @@
     "swing": 0.7,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -314,6 +333,7 @@
     "swing": -0.7,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -329,6 +349,7 @@
     "swing": -0.7,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -344,6 +365,7 @@
     "swing": 0.7,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -359,6 +381,7 @@
     "swing": 0.2,
     "offset": 0.0,
     "idle": 0.25,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -381,6 +404,7 @@
     "swing": 0.12,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -396,6 +420,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -411,6 +436,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -426,6 +452,7 @@
     "swing": 0.6,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -441,6 +468,7 @@
     "swing": 0.6,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -456,6 +484,7 @@
     "swing": -0.22,
     "offset": 0.0,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -471,6 +500,7 @@
     "swing": -0.22,
     "offset": 1.6,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -493,6 +523,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.02,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -508,6 +539,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.02,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": true
@@ -523,6 +555,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -538,6 +571,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": true
@@ -553,6 +587,7 @@
     "swing": 0.32,
     "offset": 0.0,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 1.2217304763960306,
     "look": false,
     "glow": false
@@ -568,6 +603,7 @@
     "swing": 0.32,
     "offset": 3.141592653589793,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": -1.2217304763960306,
     "look": false,
     "glow": false
@@ -583,6 +619,7 @@
     "swing": 0.32,
     "offset": 3.141592653589793,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.7330382858376184,
     "look": false,
     "glow": false
@@ -598,6 +635,7 @@
     "swing": 0.32,
     "offset": 6.283185307179586,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": -0.7330382858376184,
     "look": false,
     "glow": false
@@ -613,6 +651,7 @@
     "swing": 0.32,
     "offset": 0.0,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.24434609527920614,
     "look": false,
     "glow": false
@@ -628,6 +667,7 @@
     "swing": 0.32,
     "offset": 3.141592653589793,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": -0.24434609527920614,
     "look": false,
     "glow": false
@@ -643,6 +683,7 @@
     "swing": 0.32,
     "offset": 3.141592653589793,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": -0.24434609527920614,
     "look": false,
     "glow": false
@@ -658,6 +699,7 @@
     "swing": 0.32,
     "offset": 6.283185307179586,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.24434609527920614,
     "look": false,
     "glow": false
@@ -673,6 +715,7 @@
     "swing": 0.32,
     "offset": 0.0,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": -0.7330382858376184,
     "look": false,
     "glow": false
@@ -688,6 +731,7 @@
     "swing": 0.32,
     "offset": 3.141592653589793,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.7330382858376184,
     "look": false,
     "glow": false
@@ -703,6 +747,7 @@
     "swing": 0.32,
     "offset": 3.141592653589793,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": -1.2217304763960306,
     "look": false,
     "glow": false
@@ -718,6 +763,7 @@
     "swing": 0.32,
     "offset": 6.283185307179586,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 1.2217304763960306,
     "look": false,
     "glow": false
@@ -740,6 +786,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.012,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -755,6 +802,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -770,6 +818,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -785,6 +834,7 @@
     "swing": 0.5,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -800,6 +850,7 @@
     "swing": -0.5,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -815,6 +866,7 @@
     "swing": -0.4,
     "offset": 0.0,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -830,6 +882,7 @@
     "swing": 0.4,
     "offset": 1.5,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -852,6 +905,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -867,6 +921,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -882,6 +937,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -897,6 +953,7 @@
     "swing": 0.8,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -912,6 +969,7 @@
     "swing": -0.8,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -927,6 +985,7 @@
     "swing": -0.7,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -942,6 +1001,7 @@
     "swing": 0.5,
     "offset": 0.0,
     "idle": 0.08,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -964,6 +1024,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.03,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -979,6 +1040,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -994,6 +1056,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -1009,6 +1072,7 @@
     "swing": 0.95,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1024,6 +1088,7 @@
     "swing": -0.95,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1039,6 +1104,7 @@
     "swing": -0.9,
     "offset": 0.0,
     "idle": 0.06,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1054,6 +1120,7 @@
     "swing": 0.9,
     "offset": 1.2,
     "idle": 0.06,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1076,6 +1143,7 @@
     "swing": 0.08,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1091,6 +1159,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -1106,6 +1175,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -1121,6 +1191,7 @@
     "swing": 0.55,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1136,6 +1207,7 @@
     "swing": 0.55,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1151,6 +1223,7 @@
     "swing": 0.5,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1166,6 +1239,7 @@
     "swing": -0.5,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1188,6 +1262,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.02,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1203,6 +1278,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": false
@@ -1218,6 +1294,7 @@
     "swing": 0.0,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": true,
     "glow": true
@@ -1233,6 +1310,7 @@
     "swing": -0.6,
     "offset": 0.0,
     "idle": 0.07,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1248,6 +1326,7 @@
     "swing": 0.6,
     "offset": 1.3,
     "idle": 0.07,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1263,6 +1342,7 @@
     "swing": 0.7,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
     "yaw": 0.0,
     "look": false,
     "glow": false
@@ -1278,6 +1358,245 @@
     "swing": -0.7,
     "offset": 0.0,
     "idle": 0.0,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   }
+  ]
+ },
+ "climber": {
+  "scale": 4.5,
+  "stride": 0.9,
+  "bob": 0.04,
+  "parts": [
+   {
+    "model": "climber_torso",
+    "pivot": [
+     0.0,
+     5.0625,
+     0.0
+    ],
+    "axis": "z",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.015,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "climber_head",
+    "pivot": [
+     0.0,
+     8.8594,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": true,
+    "glow": false
+   },
+   {
+    "model": "climber_eyes",
+    "pivot": [
+     0.0,
+     8.8594,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": true,
+    "glow": true
+   },
+   {
+    "model": "climber_leg_l",
+    "pivot": [
+     -0.8719,
+     5.0625,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.55,
+    "offset": 0.0,
+    "idle": 0.0,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "climber_leg_r",
+    "pivot": [
+     0.8719,
+     5.0625,
+     0.0
+    ],
+    "axis": "x",
+    "swing": -0.55,
+    "offset": 0.0,
+    "idle": 0.0,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "climber_arm_l",
+    "pivot": [
+     -2.4187,
+     8.1562,
+     0.0
+    ],
+    "axis": "x",
+    "swing": -0.5,
+    "offset": 0.0,
+    "idle": 0.03,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "climber_arm_r",
+    "pivot": [
+     2.4187,
+     8.1562,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.5,
+    "offset": 1.5,
+    "idle": 0.03,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   }
+  ]
+ },
+ "snatcher": {
+  "scale": 1.3,
+  "stride": 1.0,
+  "bob": 0.0,
+  "parts": [
+   {
+    "model": "snatcher_body",
+    "pivot": [
+     0.0,
+     0.975,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.04,
+    "ispeed": 0.8,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "snatcher_head",
+    "pivot": [
+     0.0,
+     1.7875,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": true,
+    "glow": false
+   },
+   {
+    "model": "snatcher_eyes",
+    "pivot": [
+     0.0,
+     1.7875,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.0,
+    "ispeed": 0.12,
+    "yaw": 0.0,
+    "look": true,
+    "glow": true
+   },
+   {
+    "model": "snatcher_wing_l",
+    "pivot": [
+     -0.1788,
+     1.7063,
+     0.0
+    ],
+    "axis": "z",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.55,
+    "ispeed": 0.8,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "snatcher_wing_r",
+    "pivot": [
+     0.1788,
+     1.7063,
+     0.0
+    ],
+    "axis": "z",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": -0.55,
+    "ispeed": 0.8,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "snatcher_leg_l",
+    "pivot": [
+     -0.1137,
+     0.975,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 0.0,
+    "idle": 0.18,
+    "ispeed": 0.35,
+    "yaw": 0.0,
+    "look": false,
+    "glow": false
+   },
+   {
+    "model": "snatcher_leg_r",
+    "pivot": [
+     0.1137,
+     0.975,
+     0.0
+    ],
+    "axis": "x",
+    "swing": 0.0,
+    "offset": 1.6,
+    "idle": 0.18,
+    "ispeed": 0.35,
     "yaw": 0.0,
     "look": false,
     "glow": false

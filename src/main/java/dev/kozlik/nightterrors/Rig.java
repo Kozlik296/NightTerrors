@@ -33,7 +33,7 @@ import org.joml.Vector3f;
 final class Rig {
 
     record Part(String model, float px, float py, float pz, char axis, float swing, float offset,
-                float idle, float baseYaw, boolean look, boolean glow) { }
+                float idle, float idleSpeed, float baseYaw, boolean look, boolean glow) { }
 
     record Def(float scale, float stride, float bob, List<Part> parts) { }
 
@@ -54,7 +54,7 @@ final class Rig {
                     parts.add(new Part(p.get("model").getAsString(),
                             piv.get(0).getAsFloat(), piv.get(1).getAsFloat(), piv.get(2).getAsFloat(),
                             p.get("axis").getAsString().charAt(0), p.get("swing").getAsFloat(),
-                            p.get("offset").getAsFloat(), p.get("idle").getAsFloat(), p.get("yaw").getAsFloat(),
+                            p.get("offset").getAsFloat(), p.get("idle").getAsFloat(), p.has("ispeed") ? p.get("ispeed").getAsFloat() : 0.12f, p.get("yaw").getAsFloat(),
                             p.get("look").getAsBoolean(), p.get("glow").getAsBoolean()));
                 }
                 out.put(e.getKey(), new Def(o.get("scale").getAsFloat(), o.get("stride").getAsFloat(),
@@ -178,7 +178,7 @@ final class Rig {
                 q.rotateY((float) -Math.toRadians(headYaw)).rotateX((float) Math.toRadians(headPitch));
             }
             float a = (float) (p.swing() * Math.sin(phase + p.offset()) * amp
-                    + (asleep ? 0.0 : p.idle() * Math.sin(time * 0.12 + p.offset())));
+                    + (asleep ? 0.0 : p.idle() * Math.sin(time * p.idleSpeed() + p.offset())));
             if (strike > 0.02f && p.model().contains("arm") && p.axis() == 'x') {
                 q.rotateX(-1.5f * strike); // both arms thrown forward
             }
