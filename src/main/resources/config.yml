@@ -31,14 +31,14 @@ settings:
     - "&7Obr bez kuze rozbiji &fdrevo, prkna, ploty, dvere, branky, listi, vlnu a sklo&7."
     - "&7Kamen a tvrdsi bloky nezbori. &fStav hradby a dum z kamene&7, jinak ti je znici."
     - "&7Pres den spi, dokud k nemu neprijdes. Citi te i pres zdi."
-    - "&7Mensi tlusty obr (Climber) nic nebori, ale &fvyleze po kolme zdi&7. Na slunci shori."
+    - "&7Mensi obr s pulkou lidske tvare (Climber) nic nebori, ale &fvyleze po kolme zdi&7. Na slunci shori."
 
 # Zvuky pluginu jsou v malem resource packu, ktery se hraci nabidne pri pripojeni.
 # Kdo ho odmitne, vlastni zvuky neuslysi.
 resource-pack:
   enabled: true
   url: "https://raw.githubusercontent.com/Kozlik296/NightTerrors/main/pack/NightTerrors-pack.zip"
-  sha1: "2ff5896afb8ab4452ef63146f552c4d919e23b4c"
+  sha1: "8f1d13be74e7c820affd3049266f6dbd04dee3cd"
 
 mobs:
   stalker:

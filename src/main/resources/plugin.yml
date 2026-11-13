@@ -1,5 +1,5 @@
 name: NightTerrors
-version: 1.6.0
+version: 1.6.1
 main: dev.kozlik.nightterrors.NightTerrors
 api-version: '1.21'
 description: Scary custom mobs that replace natural spawns with a configurable chance.
