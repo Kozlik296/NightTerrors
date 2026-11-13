@@ -25,6 +25,12 @@
 settings:
   despawn-at-day: true     # za usvitu zmizi v koure
   view-angle: 65           # pulka zorneho uhlu hrace ve stupnich (pro STALKER a WATCHER)
+  # Zprava, kterou hrac uvidi v chatu po pripojeni. Barvy pres &, prazdny seznam [] = nic neposilat.
+  join-message:
+    - "&c&l[NightTerrors] &r&cPozor na Breachera!"
+    - "&7Obr bez kuze rozbiji &fdrevo, prkna, ploty, dvere, branky, listi, vlnu a sklo&7."
+    - "&7Kamen a tvrdsi bloky nezbori. &fStav hradby a dum z kamene&7, jinak ti je znici."
+    - "&7Pres den spi, dokud k nemu neprijdes. Citi te i pres zdi."
 
 # Zvuky pluginu jsou v malem resource packu, ktery se hraci nabidne pri pripojeni.
 # Kdo ho odmitne, vlastni zvuky neuslysi.

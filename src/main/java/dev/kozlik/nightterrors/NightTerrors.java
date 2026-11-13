@@ -99,6 +99,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     private boolean despawnAtDay;
     private String packUrl = "";
     private byte[] packHash;
+    private List<String> joinMessage = new ArrayList<>();
     private double viewCos;
     private long tick;
     /** True while this plugin itself moves a mob, so its own teleport is not blocked. */
@@ -126,6 +127,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         despawnAtDay = getConfig().getBoolean("settings.despawn-at-day", true);
         packUrl = getConfig().getBoolean("resource-pack.enabled", true) ? getConfig().getString("resource-pack.url", "") : "";
         packHash = parseHex(getConfig().getString("resource-pack.sha1", ""));
+        joinMessage = getConfig().getStringList("settings.join-message");
         viewCos = Math.cos(Math.toRadians(getConfig().getDouble("settings.view-angle", 65)));
         ConfigurationSection mobs = getConfig().getConfigurationSection("mobs");
         if (mobs != null) {
@@ -1065,6 +1067,17 @@ public final class NightTerrors extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
+        Player joined = e.getPlayer();
+        if (!joinMessage.isEmpty()) {
+            // A little later, so it is not buried under the server's own join messages.
+            Bukkit.getScheduler().runTaskLater(this, () -> {
+                if (joined.isOnline()) {
+                    for (String line : joinMessage) {
+                        joined.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', line));
+                    }
+                }
+            }, 60L);
+        }
         if (packUrl == null || packUrl.isEmpty()) {
             return;
         }
