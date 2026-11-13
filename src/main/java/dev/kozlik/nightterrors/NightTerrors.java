@@ -511,6 +511,9 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         }
         if (e instanceof EntityDamageByEntityEvent by && e.getEntity() instanceof Player victim) {
             Tracked t = tracked.get(by.getDamager().getUniqueId());
+            if (t != null && t.rig != null) {
+                t.rig.strike();
+            }
             if (t != null && t.kind.knockback > 0) {
                 Vector push = victim.getLocation().toVector().subtract(t.mob.getLocation().toVector()).setY(0);
                 if (push.lengthSquared() < 0.01) {

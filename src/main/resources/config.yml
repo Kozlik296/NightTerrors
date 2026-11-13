@@ -30,7 +30,7 @@ settings:
 resource-pack:
   enabled: true
   url: "https://raw.githubusercontent.com/Kozlik296/NightTerrors/main/pack/NightTerrors-pack.zip"
-  sha1: "092aa2c0ed040b1052a239c0c3c44a21bb4a18cb"
+  sha1: "c2afc9a5289a5a91fe149e968f2525f70ef71121"
 
 mobs:
   stalker:

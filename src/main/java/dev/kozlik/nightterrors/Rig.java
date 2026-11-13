@@ -75,6 +75,7 @@ final class Rig {
     private float phase;
     private float amp;
     private long time;
+    private float strike;
 
     Rig(Def def, Mob mob, float yawOffset) {
         this.def = def;
@@ -122,7 +123,7 @@ final class Rig {
         if (moved > 4) {
             moved = 0; // teleported, not walked
         }
-        boolean moving = moved > 0.03;
+        boolean moving = moved > 0.012;
         float want = yaw;
         if (moving) {
             want = (float) Math.toDegrees(Math.atan2(-dx, dz));
@@ -133,6 +134,7 @@ final class Rig {
         phase += (float) (moved * def.stride() / Math.max(0.1f, factor)); // bigger body, longer steps
         amp += ((moving ? 1f : 0f) - amp) * 0.5f;
         time++;
+        strike *= 0.62f; // an attack swing fades over about half a second
 
         float relYaw = 0f;
         float pitch = 0f;
@@ -162,6 +164,9 @@ final class Rig {
             }
             float a = (float) (p.swing() * Math.sin(phase + p.offset()) * amp
                     + (asleep ? 0.0 : p.idle() * Math.sin(time * 0.12 + p.offset())));
+            if (strike > 0.02f && p.model().contains("arm") && p.axis() == 'x') {
+                q.rotateX(-1.5f * strike); // both arms thrown forward
+            }
             if (a != 0f) {
                 switch (p.axis()) {
                     case 'y' -> q.rotateY(a);
@@ -185,6 +190,11 @@ final class Rig {
                 d.setGlowing(on);
             }
         }
+    }
+
+    /** Starts the attack animation: arms swing forward and drop back. */
+    void strike() {
+        strike = 1f;
     }
 
     void remove() {
