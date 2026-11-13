@@ -38,6 +38,8 @@ final class MobKind {
     int groupSize;
     int xp;
     boolean soundOnlyMoving;
+    double dodgeChance;
+    boolean steam;
 
     String soundKey;
     double soundRadius;
@@ -128,6 +130,8 @@ final class MobKind {
         k.wakeRange = s.getDouble("wake-range", 14);
         k.groupSize = Math.max(1, s.getInt("group-size", 1));
         k.xp = s.getInt("xp", -1);
+        k.dodgeChance = s.getDouble("dodge-projectiles", 0.0);
+        k.steam = s.getBoolean("steam", false);
         k.soundOnlyMoving = s.getBoolean("sound.only-moving", false);
 
         k.soundKey = s.getString("sound.key", "");

@@ -14,6 +14,7 @@
 #   model           vlastni vzhled z resource packu (stalker, watcher, ripper, crawler, spider); prazdne = vanilla telo
 #   model-yaw-offset  kdyby model koukal dozadu, dej 180
 #   sound.key       libovolny zvuk hry nebo resource packu
+#   dodge-projectiles  sance 0-1, ze mob uhne sipu/trojzubci
 #   xp              kolik XP z nej padne (-1 = jako vanilla telo)
 #   group-size      kolik se jich spawne najednou (smecka)
 #   persistent      true = nezmizi za usvitu ani kdyz odejdes
@@ -43,6 +44,7 @@ mobs:
     surface-only: true
     max-alive: 3
     xp: 60
+    dodge-projectiles: 1.0   # sance 0-1, ze uhne sipu nebo trojzubci (proleti skrz a on ukroci stranou)
     health: 40
     damage: 9
     speed: 0.3
@@ -171,6 +173,7 @@ mobs:
     surface-only: true
     max-alive: 3
     xp: 60
+    dodge-projectiles: 1.0
     health: 40
     damage: 1
     speed: 0.3
@@ -209,9 +212,10 @@ mobs:
     sleeps-by-day: true    # pres den stoji se sklonenou hlavou a zhasnutyma ocima
     wake-range: 14         # hrac bliz nez tohle (nebo rana) ho na ten den probudi
     xp: 500
+    steam: true            # z tela stoupa para
     health: 400
     damage: 20
-    speed: 0.2
+    speed: 0.27
     scale: 5.0
     follow-range: 64
     knockback: 3.0

@@ -46,6 +46,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.persistence.PersistentDataType;
@@ -277,6 +278,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         setAttr(mob, Attribute.FOLLOW_RANGE, k.followRange);
         setAttr(mob, Attribute.SCALE, k.scale);
         mob.setSilent(k.silent);
+        mob.setCanPickupItems(false); // none of them may loot dropped gear
         if (k.scale >= 2.0) {
             setAttr(mob, Attribute.STEP_HEIGHT, Math.min(3.0, 0.6 * k.scale));
         }
@@ -441,6 +443,15 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 case MIMIC -> mimic(t);
                 default -> { }
             }
+            if (mob.isValid() && t.kind.steam && !asleep && tick % 4 == 0) {
+                // Steam rising off the body: count 0 turns the offset into a direction, so each puff drifts up.
+                ThreadLocalRandom rnd = ThreadLocalRandom.current();
+                double w = mob.getWidth() * 0.6;
+                for (int i = 0; i < 4; i++) {
+                    Location at = mob.getLocation().add(rnd.nextDouble(-w, w), rnd.nextDouble(0.2, 1.0) * mob.getHeight(), rnd.nextDouble(-w, w));
+                    mob.getWorld().spawnParticle(Particle.CLOUD, at, 0, rnd.nextDouble(-0.02, 0.02), 0.09, rnd.nextDouble(-0.02, 0.02), 1.0);
+                }
+            }
             if (mob.isValid()) {
                 boolean quiet = asleep || (t.kind.behavior == MobKind.Behavior.MIMIC && t.state == 0);
                 if (!quiet) {
@@ -534,6 +545,41 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                     }
                 });
             }
+        }
+    }
+
+    /** Arrows and tridents fly through a dodging mob while it slips sideways. */
+    @EventHandler(ignoreCancelled = true)
+    public void onProjectileHit(ProjectileHitEvent e) {
+        if (e.getHitEntity() == null) {
+            return;
+        }
+        Tracked t = tracked.get(e.getHitEntity().getUniqueId());
+        if (t == null || t.kind.dodgeChance <= 0 || ThreadLocalRandom.current().nextDouble() >= t.kind.dodgeChance) {
+            return;
+        }
+        e.setCancelled(true);
+        Mob mob = t.mob;
+        Vector fly = e.getEntity().getVelocity().setY(0);
+        if (fly.lengthSquared() < 0.0001) {
+            return;
+        }
+        fly.normalize();
+        Vector side = new Vector(-fly.getZ(), 0, fly.getX());
+        if (ThreadLocalRandom.current().nextBoolean()) {
+            side.multiply(-1);
+        }
+        Location from = mob.getLocation();
+        for (int attempt = 0; attempt < 2; attempt++) {
+            Location to = from.clone().add(side.clone().multiply(1.8));
+            if (to.getBlock().isPassable() && to.clone().add(0, 1, 0).getBlock().isPassable()
+                    && !to.clone().add(0, -1, 0).getBlock().isPassable()) {
+                mob.getWorld().spawnParticle(Particle.LARGE_SMOKE, from.clone().add(0, mob.getHeight() / 2.0, 0),
+                        12, 0.2, mob.getHeight() / 3.0, 0.2, 0.01);
+                tp(mob, to);
+                return;
+            }
+            side.multiply(-1); // other side
         }
     }
 
