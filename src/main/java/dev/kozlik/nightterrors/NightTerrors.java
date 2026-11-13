@@ -491,6 +491,9 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         Tracked hit = tracked.get(e.getEntity().getUniqueId());
         if (hit != null) {
             hit.awakeDay = hit.mob.getWorld().getFullTime() / 24000L; // hitting a sleeper wakes it
+            if (hit.kind.behavior == MobKind.Behavior.BURROWER && hit.state == 1) {
+                hit.stateUntil = Math.max(hit.stateUntil, tick + 120); // a fight keeps it on the surface
+            }
             if (hit.kind.behavior == MobKind.Behavior.MIMIC && hit.state == 0) {
                 Tracked m = hit;
                 Bukkit.getScheduler().runTask(this, () -> {
@@ -572,8 +575,9 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     /** Sleeps through the day until a player comes close or hits it; then stays awake for that day. */
     private boolean asleep(Tracked t) {
         World w = t.mob.getWorld();
-        if (!w.isDayTime()) {
-            return false;
+        long time = w.getTime();
+        if (time >= 12300 && time <= 23850) {
+            return false; // night by the clock; weather must not flip this
         }
         long day = w.getFullTime() / 24000L;
         if (t.awakeDay == day) {
@@ -718,7 +722,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         }
         t.hidden = new Location(w, loc.getX(), ground.getY() + 1 - k.depth, loc.getZ(), loc.getYaw(), 0f);
         t.state = 0;
-        t.cooldownUntil = tick + k.cooldownTicks;
+        t.cooldownUntil = effects ? tick + k.cooldownTicks : tick; // freshly spawned ones are ready at once
         mob.getPathfinder().stopPathfinding();
         mob.setAI(false);
         mob.setInvulnerable(true);
@@ -817,6 +821,13 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             mob.getWorld().playSound(at, k.eruptSound, SoundCategory.HOSTILE, 1.5f, 1.0f);
         }
         t.huntUntil = 0;
+        // Everyone close by gets their head snapped toward it.
+        Location face = mob.getLocation().add(0, mob.getHeight() * 1.4, 0);
+        for (Player p : mob.getWorld().getPlayers()) {
+            if (counts(p) && p.getLocation().distanceSquared(face) <= k.effectRange * k.effectRange) {
+                p.lookAt(face.getX(), face.getY(), face.getZ(), io.papermc.paper.entity.LookAnchor.EYES);
+            }
+        }
     }
 
     private void mimic(Tracked t) {

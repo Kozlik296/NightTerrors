@@ -75,6 +75,8 @@ final class Rig {
     private float phase;
     private float amp;
     private long time;
+    private float headYaw;
+    private float headPitch;
     private float strike;
 
     Rig(Def def, Mob mob, float yawOffset) {
@@ -141,6 +143,24 @@ final class Rig {
         Location at = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ(), yaw + yawOffset, 0f);
         float bob = (float) (def.bob() * Math.abs(Math.sin(phase)) * amp) * factor;
         float s = def.scale() * factor;
+        // Head pose is eased toward its goal, so a goal that flips between steps cannot make the head jerk.
+        float goalYaw = 0f;
+        float goalPitch = asleep ? 35f : 0f;
+        if (!asleep && look != null) {
+            float headY = 0f;
+            for (Part p : def.parts()) {
+                if (p.look()) {
+                    headY = p.py() * factor;
+                    break;
+                }
+            }
+            goalYaw = clamp(wrap(yawTo(loc, look) - yaw), -70f, 70f);
+            double up = look.getY() - (loc.getY() + headY);
+            double flat = Math.hypot(look.getX() - loc.getX(), look.getZ() - loc.getZ());
+            goalPitch = clamp((float) -Math.toDegrees(Math.atan2(up, Math.max(flat, 0.01))), -40f, 40f);
+        }
+        headYaw += (goalYaw - headYaw) * 0.25f;
+        headPitch += (goalPitch - headPitch) * 0.25f;
         for (int i = 0; i < displays.size(); i++) {
             ItemDisplay d = displays.get(i);
             if (!d.isValid()) {
@@ -151,16 +171,9 @@ final class Rig {
             if (p.baseYaw() != 0f) {
                 q.rotateY(p.baseYaw()); // fans the legs out around the body
             }
-            if (p.look() && asleep) {
-                q.rotateX((float) Math.toRadians(35)); // head bowed
-            }
-            if (p.look() && look != null) {
-                relYaw = clamp(wrap(yawTo(loc, look) - yaw), -70f, 70f);
-                double up = look.getY() - (loc.getY() + p.py() * factor);
-                double flat = Math.hypot(look.getX() - loc.getX(), look.getZ() - loc.getZ());
-                pitch = clamp((float) -Math.toDegrees(Math.atan2(up, Math.max(flat, 0.01))), -40f, 40f);
+            if (p.look()) {
                 // Minecraft yaw grows clockwise, JOML's Y rotation counter-clockwise, hence the minus.
-                q.rotateY((float) -Math.toRadians(relYaw)).rotateX((float) Math.toRadians(pitch));
+                q.rotateY((float) -Math.toRadians(headYaw)).rotateX((float) Math.toRadians(headPitch));
             }
             float a = (float) (p.swing() * Math.sin(phase + p.offset()) * amp
                     + (asleep ? 0.0 : p.idle() * Math.sin(time * 0.12 + p.offset())));
