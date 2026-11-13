@@ -76,6 +76,9 @@ final class Rig {
     private float amp;
     private long time;
     private float headYaw;
+    private double lastY;
+    private boolean climbing;
+    private float climbPose;
     private float headPitch;
     private float strike;
 
@@ -85,6 +88,7 @@ final class Rig {
         Location loc = mob.getLocation();
         this.lastX = loc.getX();
         this.lastZ = loc.getZ();
+        this.lastY = loc.getY();
         this.yaw = loc.getYaw();
         Location at = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ(), yaw + yawOffset, 0f);
         for (Part p : def.parts()) {
@@ -121,6 +125,8 @@ final class Rig {
         double dz = loc.getZ() - lastZ;
         lastX = loc.getX();
         lastZ = loc.getZ();
+        double rise = Math.abs(loc.getY() - lastY);
+        lastY = loc.getY();
         double moved = Math.hypot(dx, dz);
         if (moved > 4) {
             moved = 0; // teleported, not walked
@@ -137,6 +143,12 @@ final class Rig {
         yaw += clamp(wrap(want - yaw) * 0.35f, -maxTurn, maxTurn);
         phase += (float) (moved * def.stride() / Math.max(0.1f, factor)); // bigger body, longer steps
         amp += ((moving ? 1f : 0f) - amp) * 0.5f;
+        // Climbing: arms come up over the head and reach hand over hand, driven by how fast it rises.
+        climbPose += ((climbing ? 1f : 0f) - climbPose) * 0.3f;
+        if (climbing) {
+            phase += (float) (rise * def.stride() * 3.0 / Math.max(0.1f, factor)) + 0.25f;
+            amp = Math.max(amp, 0.8f);
+        }
         time++;
         strike *= 0.62f; // an attack swing fades over about half a second
 
@@ -177,6 +189,10 @@ final class Rig {
                 // Minecraft yaw grows clockwise, JOML's Y rotation counter-clockwise, hence the minus.
                 q.rotateY((float) -Math.toRadians(headYaw)).rotateX((float) Math.toRadians(headPitch));
             }
+            if (climbPose > 0.01f && p.model().contains("arm")) {
+                // -2.8 rad about X swings a hanging arm up and a little forward, toward the wall.
+                q.rotateX(-2.8f * climbPose);
+            }
             float a = (float) (p.swing() * Math.sin(phase + p.offset()) * amp
                     + (asleep ? 0.0 : p.idle() * Math.sin(time * p.idleSpeed() + p.offset())));
             if (strike > 0.02f && p.model().contains("arm") && p.axis() == 'x') {
@@ -210,6 +226,10 @@ final class Rig {
     /** Starts the attack animation: arms swing forward and drop back. */
     void strike() {
         strike = 1f;
+    }
+
+    void setClimbing(boolean climbing) {
+        this.climbing = climbing;
     }
 
     void remove() {

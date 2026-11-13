@@ -8,7 +8,8 @@
 #   worlds          seznam svetu, [] = vsechny
 #   only-at-night   spawn jen v noci
 #   surface-only    spawn jen pod otevrenym nebem (ne v jeskynich)
-#   speed           vanilla atribut rychlosti (zombie ma 0.23)
+#   speed           vanilla atribut rychlosti (zombie ma 0.23). Skutecna rychlost roste s druhou mocninou:
+#                   bloku/s = 44 x speed x speed (x approach-speed na druhou). Hrac jde 4.3, sprintuje 5.6.
 #   scale           velikost (1.0 = normalni)
 #   knockback       jak daleko odhodi hrace pri zasahu (0 = jen vanilla)
 #   model           vlastni vzhled z resource packu (stalker, watcher, ripper, crawler, spider); prazdne = vanilla telo
@@ -38,7 +39,7 @@ settings:
 resource-pack:
   enabled: true
   url: "https://raw.githubusercontent.com/Kozlik296/NightTerrors/main/pack/NightTerrors-pack.zip"
-  sha1: "8f1d13be74e7c820affd3049266f6dbd04dee3cd"
+  sha1: "1c44ed541783b5f42e9373ac70c5c819731f6906"
 
 mobs:
   stalker:
@@ -405,7 +406,7 @@ mobs:
     xp: 150
     health: 120
     damage: 10
-    speed: 0.36
+    speed: 0.32            # asi 0.8 rychlosti sprintujiciho hrace
     scale: 2.5
     follow-range: 48
     knockback: 1.5

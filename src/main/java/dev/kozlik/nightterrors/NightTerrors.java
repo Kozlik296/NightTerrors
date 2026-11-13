@@ -81,6 +81,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         long awakeDay = -1;
         boolean inReach;
         UUID carryId;
+        long climbUntil;
         double grabY;
         double lastX;
         double lastZ;
@@ -720,7 +721,7 @@ public final class NightTerrors extends JavaPlugin implements Listener {
                 smash(t, target);
             }
             if (k.climbs) {
-                climb(mob, target);
+                climb(t, target);
             }
         } else {
             t.inReach = true; // stays put until the player gets clearly out of reach again
@@ -734,7 +735,8 @@ public final class NightTerrors extends JavaPlugin implements Listener {
     }
 
     /** Straight up a sheer wall: while something solid is right in front, push up and slightly forward. */
-    private void climb(Mob mob, Player target) {
+    private void climb(Tracked t, Player target) {
+        Mob mob = t.mob;
         Location loc = mob.getLocation();
         Vector dir = target.getLocation().toVector().subtract(loc.toVector()).setY(0);
         if (dir.lengthSquared() < 0.01) {
@@ -747,8 +749,24 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             wall = front.getRelative(0, y, 0).getType().isSolid();
         }
         if (wall) {
-            mob.setVelocity(dir.multiply(0.14).setY(0.3));
+            mob.setVelocity(dir.clone().multiply(0.14).setY(0.3));
             mob.setFallDistance(0f);
+            t.climbUntil = tick + 8;
+            if (tick % 6 == 0) {
+                // Hands tearing at the wall: chips of the block it is holding on to, and a scrape.
+                Block grip = front.getRelative(0, (int) Math.floor(mob.getHeight()), 0);
+                if (!grip.getType().isSolid()) {
+                    grip = front;
+                }
+                if (grip.getType().isSolid()) {
+                    Location at = loc.clone().add(dir.clone().multiply(mob.getWidth() / 2.0 + 0.2)).add(0, mob.getHeight(), 0);
+                    mob.getWorld().spawnParticle(Particle.BLOCK, at, 14, 0.5, 0.3, 0.5, grip.getBlockData());
+                    mob.getWorld().playEffect(grip.getLocation(), Effect.STEP_SOUND, grip.getType());
+                }
+            }
+        }
+        if (t.rig != null) {
+            t.rig.setClimbing(tick < t.climbUntil);
         }
     }
 
