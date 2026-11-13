@@ -430,7 +430,8 @@ mobs:
       attack-reach: 3.0
       attack-cooldown-ticks: 24
       breaks-blocks: false
-      climbs: true         # vyleze po kolme zdi
+      climbs: true         # vyleze po kolme zdi i pres previs
+      swims: true          # plave
 
   snatcher:
     enabled: true

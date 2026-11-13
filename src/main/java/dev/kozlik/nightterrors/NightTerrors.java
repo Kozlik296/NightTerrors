@@ -46,6 +46,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
+import org.bukkit.event.entity.EntityTransformEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.EntityEquipment;
@@ -616,6 +617,14 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         }
     }
 
+    /** A husk body left in water would turn into a plain zombie and stop being one of ours. */
+    @EventHandler(ignoreCancelled = true)
+    public void onTransform(EntityTransformEvent e) {
+        if (tracked.containsKey(e.getEntity().getUniqueId())) {
+            e.setCancelled(true);
+        }
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onTeleport(EntityTeleportEvent e) {
         // Stops the enderman body from blinking away when wet or hit.
@@ -723,6 +732,15 @@ public final class NightTerrors extends JavaPlugin implements Listener {
             if (k.climbs) {
                 climb(t, target);
             }
+            if (k.swims && mob.isInWater()) {
+                // No vanilla brain means no floating on its own: paddle up and toward the target.
+                Vector swim = target.getLocation().toVector().subtract(mob.getLocation().toVector()).setY(0);
+                if (swim.lengthSquared() > 0.01) {
+                    swim.normalize().multiply(0.16);
+                }
+                boolean headUnder = mob.getEyeLocation().getBlock().isLiquid();
+                mob.setVelocity(swim.setY(headUnder ? 0.12 : 0.02));
+            }
         } else {
             t.inReach = true; // stays put until the player gets clearly out of reach again
             pf.stopPathfinding();
@@ -745,10 +763,18 @@ public final class NightTerrors extends JavaPlugin implements Listener {
         dir.normalize();
         Block front = loc.clone().add(dir.clone().multiply(mob.getWidth() / 2.0 + 0.7)).getBlock();
         boolean wall = false;
-        for (int y = 0; y <= (int) Math.ceil(mob.getHeight()) && !wall; y++) {
+        int tall = (int) Math.ceil(mob.getHeight());
+        // Two blocks above its head count too, so the lip of an overhang still reads as something to climb.
+        for (int y = 0; y <= tall + 2 && !wall; y++) {
             wall = front.getRelative(0, y, 0).getType().isSolid();
         }
-        if (wall) {
+        Block overhead = loc.clone().add(0, mob.getHeight() + 0.3, 0).getBlock();
+        if (wall && overhead.getType().isSolid()) {
+            // Under an overhang: hang on, ease back out from under it, then the normal climb takes over.
+            mob.setVelocity(dir.clone().multiply(-0.2).setY(0.03));
+            mob.setFallDistance(0f);
+            t.climbUntil = tick + 8;
+        } else if (wall) {
             mob.setVelocity(dir.clone().multiply(0.14).setY(0.3));
             mob.setFallDistance(0f);
             t.climbUntil = tick + 8;

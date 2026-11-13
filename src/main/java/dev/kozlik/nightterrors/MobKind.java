@@ -91,6 +91,7 @@ final class MobKind {
     // MIMIC
     String revealModel;
     boolean climbs;
+    boolean swims;
     // FLYER
     double flySpeed;
     int liftLevel;
@@ -192,6 +193,7 @@ final class MobKind {
         k.revealModel = s.getString("behavior.reveal-model", "");
         k.tunnelSpeed = s.getDouble("behavior.tunnel-speed", 0.0);
         k.climbs = s.getBoolean("behavior.climbs", false);
+        k.swims = s.getBoolean("behavior.swims", false);
         k.flySpeed = s.getDouble("behavior.fly-speed", 0.8);
         k.liftLevel = Math.max(0, s.getInt("behavior.lift-level", 1));
         k.liftHeight = s.getDouble("behavior.lift-height", 40);
